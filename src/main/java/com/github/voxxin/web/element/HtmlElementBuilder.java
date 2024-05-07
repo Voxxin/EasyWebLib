@@ -38,6 +38,17 @@ public class HtmlElementBuilder {
     }
 
     /**
+     * Add a list of HtmlElement objects to the builder.
+     *
+     * @param htmlElements The list of HtmlElement objects to add.
+     * @return The HtmlElementBuilder instance.
+     */
+    public HtmlElementBuilder addElements(List<HtmlElement> htmlElements) {
+        this.elements.addAll(htmlElements);
+        return this;
+    }
+
+    /**
      * Build the HTML string from the elements added to the builder.
      *
      * @return The constructed HTML string.
@@ -49,4 +60,5 @@ public class HtmlElementBuilder {
         }
         return stringBuilder.toString();
     }
+
 }

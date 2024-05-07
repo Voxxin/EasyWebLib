@@ -23,7 +23,7 @@ public class HtmlParser {
      */
     private static List<HtmlElement> parseContent(String content) {
         List<HtmlElement> elements = new ArrayList<>();
-
+        Stack<String> openTags = new Stack<>();
         Pattern pattern = Pattern.compile("<(\\w+)(.*?)>(.*?)</\\1>|<(\\w+)(.*?)>", Pattern.DOTALL);
         Matcher matcher = pattern.matcher(content);
 
@@ -33,16 +33,15 @@ public class HtmlParser {
             String innerContent = matcher.group(3);
 
             if (tagName != null) {
-                HtmlElement element = new HtmlElement(tagName, parseAttributes(attributes), innerContent != null ? innerContent : "");
-
                 if (innerContent != null) {
-                    List<HtmlElement> innerElements = parseContent(innerContent);
-
-                    if (!innerElements.isEmpty()) element.addSubElements(innerElements);
-                    else element.setSubElement(innerContent);
+                    elements.add(new HtmlElement(tagName, parseAttributes(attributes), innerContent));
+                } else {
+                    openTags.push(tagName);
                 }
+            }
 
-                elements.add(element);
+            if (innerContent == null && matcher.group(4) != null && !openTags.isEmpty() && openTags.peek().equals(matcher.group(4))) {
+                openTags.pop();
             }
         }
 

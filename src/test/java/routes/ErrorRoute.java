@@ -16,10 +16,10 @@ public class ErrorRoute extends AbstractRoute {
     public OutputStream handleRequests(FormattedRequest request, OutputStream outputStream) throws IOException {
         outputStream.write(
                 new FormattedResponse()
-                        .withContentType("text/html")
-                        .withContent("<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>404 Not Found</title><style>body{font-family:Arial,sans-serif;background-color:#f0f0f0;margin:0;padding:0;display:flex;justify-content:center;align-items:center;height:100vh;}.container{text-align:center;}h1{font-size:48px;margin-bottom:20px;color:#333;}p{font-size:24px;color:#666;margin-bottom:40px;}img{max-width:100%;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,0.1);}</style></head><body><div class=\"container\"><h1>404 - Page Not Found</h1><p>Sorry, the page you are looking for could not be found.</p><img src=\"https://cataas.com/cat/gif\" alt=\"meow\"></div></body></html>\n")
-                        .withStatusCode(404)
-                        .withStatusMessage("Not Found")
+                        .contentType("text/html")
+                        .content("<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>404 Not Found</title><style>body{font-family:Arial,sans-serif;background-color:#f0f0f0;margin:0;padding:0;display:flex;justify-content:center;align-items:center;height:100vh;}.container{text-align:center;}h1{font-size:48px;margin-bottom:20px;color:#333;}p{font-size:24px;color:#666;margin-bottom:40px;}img{max-width:100%;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,0.1);}</style></head><body><div class=\"container\"><h1>404 - Page Not Found</h1><p>Sorry, the page you are looking for could not be found.</p><img src=\"https://cataas.com/cat/gif\" alt=\"meow\"></div></body></html>\n")
+                        .statusCode(404)
+                        .statusMessage("Not Found")
                         .build()
                         .getBytes()
         );
