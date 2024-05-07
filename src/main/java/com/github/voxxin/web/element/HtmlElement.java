@@ -101,7 +101,7 @@ public class HtmlElement {
      * @param subElement The text content.
      */
     public void setSubElement(String subElement) {
-        this.subElements = null;
+        this.subElements = new ArrayList<>();
         this.subElement = subElement;
     }
 
@@ -220,7 +220,7 @@ public class HtmlElement {
         }
         builder.append(">");
 
-        if (subElements != null) {
+        if (!subElements.isEmpty()) {
             for (HtmlElement element : subElements) {
                 builder.append("\n  ").append(element.htmlString());
             }
