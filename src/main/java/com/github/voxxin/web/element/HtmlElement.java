@@ -47,6 +47,24 @@ public class HtmlElement {
     }
 
     /**
+     * Get the list of sub-elements of this HtmlElement.
+     *
+     * @return The list of sub-elements.
+     */
+    public List<HtmlElement> getSubElements() {
+        return subElements;
+    }
+
+    /**
+     * Get the text content of this HtmlElement.
+     *
+     * @return The text content.
+     */
+    public String getSubElement() {
+        return subElement;
+    }
+
+    /**
      * Add a sub-element to this HtmlElement.
      *
      * @param element The sub-element to be added.
@@ -97,21 +115,84 @@ public class HtmlElement {
     }
 
     /**
-     * Get the list of sub-elements of this HtmlElement.
+     * Check if the HtmlElement has an attribute with the specified type and value.
      *
-     * @return The list of sub-elements.
+     * @param attributeType  The type of the attribute.
+     * @param attributeValue The value of the attribute.
+     * @return True if the HtmlElement has the specified attribute, false otherwise.
      */
-    public List<HtmlElement> getSubElements() {
-        return subElements;
+    public boolean hasAttribute(String attributeType, String attributeValue) {
+        if (attributes != null) {
+            for (String attr : attributes) {
+                String[] parts = attr.split("=");
+                if (parts.length == 2) {
+                    String type = parts[0].trim();
+                    String value = parts[1].replaceAll("\"", "").trim();
+                    if (type.equals(attributeType) && value.equals(attributeValue)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /**
-     * Get the text content of this HtmlElement.
+     * Get the value of the attribute with the specified type.
      *
-     * @return The text content.
+     * @param attributeType The type of the attribute.
+     * @return The value of the attribute, or null if not found.
      */
-    public String getSubElement() {
-        return subElement;
+    public String[] getAttributeValue(String attributeType) {
+        if (attributes != null) {
+            for (int i = 0; i < attributes.size(); i++) {
+                String attr = attributes.get(i);
+                String[] parts = attr.split("=");
+                if (parts.length == 2) {
+                    String type = parts[0].trim();
+                    String value = parts[1].replaceAll("\"", "").trim();
+                    if (type.equals(attributeType)) {
+                        return new String[]{value, Integer.toString(i)};
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Modify the value of the attribute at the specified index.
+     *
+     * @param index           The index of the attribute to modify.
+     * @param newAttributeValue The new value for the attribute.
+     */
+    public void modifyAttributeAtIndex(int index, String newAttributeValue) {
+        if (attributes != null && index >= 0 && index < attributes.size()) {
+            attributes.set(index, newAttributeValue);
+        }
+    }
+
+    /**
+     * Modify the value of the attribute with the specified type.
+     *
+     * @param attributeType    The type of the attribute to modify.
+     * @param newAttributeValue The new value for the attribute.
+     */
+    public void modifyAttribute(String attributeType, String newAttributeValue) {
+        if (attributes != null) {
+            for (int i = 0; i < attributes.size(); i++) {
+                String attr = attributes.get(i);
+                String[] parts = attr.split("=");
+                if (parts.length == 2) {
+                    String type = parts[0].trim();
+                    String value = parts[1].replaceAll("\"", "").trim();
+                    if (type.equals(attributeType)) {
+                        attributes.set(i, type + "=\"" + newAttributeValue + "\"");
+                        return;
+                    }
+                }
+            }
+        }
     }
 
     /**
