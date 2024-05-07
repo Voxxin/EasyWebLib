@@ -214,21 +214,23 @@ public class HtmlElement {
         if (htmlString == null) {
             StringBuilder mainBuilder = new StringBuilder();
             StringBuilder attributesBuilder = new StringBuilder();
+
             if (attributes != null) {
                 for (String attribute : attributes) {
-                    attribute = attribute.trim();
-                    attributesBuilder.append(" ").append(attribute);
+                    attributesBuilder.append(" ").append(attribute.trim());
                 }
             }
 
-            mainBuilder.append("<").append(tagName).append(attributesBuilder).append("> ");
-            if (this.subElements != null && !this.subElements.isEmpty()) {
+            mainBuilder.append("<").append(tagName).append(attributesBuilder).append(">");
+
+            if (subElements != null) {
                 for (HtmlElement element : subElements) {
                     mainBuilder.append(" ").append(element.htmlString());
                 }
             } else if (subElement != null) {
-                mainBuilder.append(subElement);
+                mainBuilder.append(" ").append(subElement);
             }
+
             mainBuilder.append("</").append(tagName).append(">");
 
             htmlString = mainBuilder.toString();
