@@ -39,7 +39,7 @@ public class HtmlElement {
     }
 
 
-    protected String getTagName() {
+    public String getTagName() {
         return this.tagName;
     }
 
