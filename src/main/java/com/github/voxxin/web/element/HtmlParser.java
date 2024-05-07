@@ -12,19 +12,18 @@ public class HtmlParser {
      * @return The list of HtmlElements parsed from the HTML string.
      */
     public static List<HtmlElement> parseHtmlString(String htmlString) {
-        List<HtmlElement> elements = new ArrayList<>();
-        parseContent(htmlString, elements, new Stack<>());
-        return elements;
+        return parseContent(htmlString);
     }
 
     /**
-     * Parse HTML content recursively.
+     * Parses the content of an HTML string recursively.
      *
-     * @param content  The content to parse.
-     * @param elements The list to store parsed HtmlElements.
-     * @param stack    Stack to keep track of nested elements.
+     * @param content The HTML content to parse.
+     * @return The list of HtmlElements parsed from the HTML content.
      */
-    private static void parseContent(String content, List<HtmlElement> elements, Stack<HtmlElement> stack) {
+    private static List<HtmlElement> parseContent(String content) {
+        List<HtmlElement> elements = new ArrayList<>();
+
         Pattern pattern = Pattern.compile("<(\\w+)(.*?)>(.*?)</\\1>|<(\\w+)(.*?)>", Pattern.DOTALL);
         Matcher matcher = pattern.matcher(content);
 
@@ -37,16 +36,15 @@ public class HtmlParser {
                 HtmlElement element = new HtmlElement(tagName, parseAttributes(attributes), innerContent != null ? innerContent : "");
 
                 if (innerContent != null) {
-                    parseContent(innerContent, elements, stack);
+                    List<HtmlElement> innerElements = parseContent(innerContent);
+                    element.addSubElements(innerElements);
                 }
-                if (!stack.isEmpty()) {
-                    stack.peek().addSubElement(element);
-                }
+
                 elements.add(element);
-            } else if (!stack.isEmpty()) {
-                stack.pop();
             }
         }
+
+        return elements;
     }
 
     /**

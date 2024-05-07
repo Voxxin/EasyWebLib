@@ -77,6 +77,16 @@ public class HtmlElement {
     }
 
     /**
+     * Add multiple sub-elements to this HtmlElement.
+     *
+     * @param subElements The list of sub-elements to be added.
+     */
+    public void addSubElements(List<HtmlElement> subElements) {
+        this.subElements.addAll(subElements);
+    }
+
+
+    /**
      * Set the list of sub-elements for this HtmlElement.
      *
      * @param subElements The list of sub-elements.
