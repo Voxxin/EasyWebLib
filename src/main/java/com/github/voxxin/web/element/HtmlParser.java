@@ -37,7 +37,9 @@ public class HtmlParser {
 
                 if (innerContent != null) {
                     List<HtmlElement> innerElements = parseContent(innerContent);
-                    element.addSubElements(innerElements);
+
+                    if (!innerElements.isEmpty()) element.addSubElements(innerElements);
+                    else element.setSubElement(innerContent);
                 }
 
                 elements.add(element);
