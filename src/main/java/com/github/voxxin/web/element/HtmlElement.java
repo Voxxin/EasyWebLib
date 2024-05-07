@@ -11,7 +11,6 @@ public class HtmlElement {
     private final List<String> attributes;
     private List<HtmlElement> subElements;
     private String subElement;
-    private String htmlString;
 
     /**
      * Constructor for HtmlElement with sub-elements.
@@ -211,30 +210,28 @@ public class HtmlElement {
      * @return The HTML string.
      */
     protected String htmlString() {
-        if (htmlString == null) {
-            StringBuilder mainBuilder = new StringBuilder();
-            StringBuilder attributesBuilder = new StringBuilder();
+        StringBuilder mainBuilder = new StringBuilder();
+        StringBuilder attributesBuilder = new StringBuilder();
 
-            if (attributes != null) {
-                for (String attribute : attributes) {
-                    attributesBuilder.append(" ").append(attribute.trim());
-                }
+        if (attributes != null) {
+            for (String attribute : attributes) {
+                attributesBuilder.append(" ").append(attribute.trim());
             }
-
-            mainBuilder.append("<").append(tagName).append(attributesBuilder).append(">");
-
-            if (subElements != null) {
-                for (HtmlElement element : subElements) {
-                    mainBuilder.append(" ").append(element.htmlString());
-                }
-            } else if (subElement != null) {
-                mainBuilder.append(" ").append(subElement);
-            }
-
-            mainBuilder.append("</").append(tagName).append(">");
-
-            htmlString = mainBuilder.toString();
         }
-        return htmlString;
+
+        mainBuilder.append("<").append(tagName).append(attributesBuilder).append(">");
+
+        if (subElements != null) {
+            for (HtmlElement element : subElements) {
+                mainBuilder.append(" ").append(element.htmlString());
+            }
+        } else if (subElement != null) {
+            mainBuilder.append(" ").append(subElement);
+        }
+
+        mainBuilder.append("</").append(tagName).append(">");
+
+        return mainBuilder.toString();
     }
+
 }
