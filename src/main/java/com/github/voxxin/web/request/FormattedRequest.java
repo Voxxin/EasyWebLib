@@ -1,6 +1,7 @@
 package com.github.voxxin.web.request;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
 
 public class FormattedRequest {
 
@@ -12,6 +13,11 @@ public class FormattedRequest {
     private final HashMap<String, String> query;
     private final String httpVersion;
 
+    /**
+     * Constructor for FormattedRequest.
+     *
+     * @param inputHeaders The list of input headers.
+     */
     public FormattedRequest(List<String> inputHeaders) {
         this.body = (inputHeaders.get(0).split(" ").length > 1 && inputHeaders.get(0).split(" ")[2].contains("HTTP/")) ? null : inputHeaders.remove(0);
 
@@ -52,30 +58,65 @@ public class FormattedRequest {
         }
     }
 
+    /**
+     * Get the request body.
+     *
+     * @return The request body.
+     */
     public String getBody() {
         return body;
     }
 
+    /**
+     * Get the request method.
+     *
+     * @return The request method.
+     */
     public String getMethod() {
         return method;
     }
 
+    /**
+     * Get the request path.
+     *
+     * @return The request path.
+     */
     public String getPath() {
         return path;
     }
 
+    /**
+     * Get the path parameters.
+     *
+     * @return The path parameters.
+     */
     public String getPathParameters() {
         return pathParameters;
     }
 
+    /**
+     * Get the request query parameters.
+     *
+     * @return The request query parameters.
+     */
     public HashMap<String, String> getQuery() {
         return query;
     }
 
+    /**
+     * Get the HTTP version.
+     *
+     * @return The HTTP version.
+     */
     public String getHttpVersion() {
         return httpVersion;
     }
 
+    /**
+     * Get the request headers.
+     *
+     * @return A HashMap representing the request headers, where keys are header names and values are header values.
+     */
     public HashMap<String, String> getHeaders() {
         return headers;
     }

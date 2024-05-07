@@ -5,12 +5,25 @@ import java.util.regex.*;
 
 public class HtmlParser {
 
+    /**
+     * Parse HTML string into a list of HtmlElements.
+     *
+     * @param htmlString The HTML string to parse.
+     * @return The list of HtmlElements parsed from the HTML string.
+     */
     public static List<HtmlElement> parseHtmlString(String htmlString) {
         List<HtmlElement> elements = new ArrayList<>();
         parseContent(htmlString, elements, new Stack<>());
         return elements;
     }
 
+    /**
+     * Parse HTML content recursively.
+     *
+     * @param content  The content to parse.
+     * @param elements The list to store parsed HtmlElements.
+     * @param stack    Stack to keep track of nested elements.
+     */
     private static void parseContent(String content, List<HtmlElement> elements, Stack<HtmlElement> stack) {
         Pattern pattern = Pattern.compile("<(\\w+)(.*?)>(.*?)</\\1>|<(\\w+)(.*?)>", Pattern.DOTALL);
         Matcher matcher = pattern.matcher(content);
@@ -36,6 +49,12 @@ public class HtmlParser {
         }
     }
 
+    /**
+     * Parse HTML attributes into a list of strings.
+     *
+     * @param attributesString The string containing HTML attributes.
+     * @return The list of parsed attributes.
+     */
     private static List<String> parseAttributes(String attributesString) {
         List<String> attributes = new ArrayList<>();
         if (attributesString != null) {
@@ -44,7 +63,7 @@ public class HtmlParser {
             while (matcher.find()) {
                 String attributeName = matcher.group(1);
                 String attributeValue = matcher.group(3);
-                attributes.add((attributeName + attributeValue).trim());
+                attributes.add((attributeName + "\"" + attributeValue + "\"").trim());
             }
         }
         return attributes;

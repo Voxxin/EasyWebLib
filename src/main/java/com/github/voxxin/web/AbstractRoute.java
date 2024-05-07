@@ -14,6 +14,12 @@ public class AbstractRoute {
         this.route = route;
     }
 
+    /**
+     * Handle a request received on this route.
+     *
+     * @param request      The formatted request.
+     * @param clientSocket The client socket.
+     */
     void handleRequest(FormattedRequest request, Socket clientSocket) {
         try (OutputStream stream = handleRequests(request, clientSocket.getOutputStream())) {
             stream.flush();
@@ -22,6 +28,14 @@ public class AbstractRoute {
         }
     }
 
+    /**
+     * Handle requests received on this route.
+     *
+     * @param request       The formatted request.
+     * @param outputStream  The output stream to write the response.
+     * @return              The output stream after handling the request.
+     * @throws IOException  If an I/O error occurs.
+     */
     public OutputStream handleRequests(FormattedRequest request, OutputStream outputStream) throws IOException {
 
         outputStream.write("um...".getBytes());

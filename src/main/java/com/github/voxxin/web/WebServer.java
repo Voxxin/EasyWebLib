@@ -31,6 +31,9 @@ public class WebServer {
         this.routes.addAll(Arrays.asList(routes));
     }
 
+    /**
+     * Start the web server.
+     */
     public void start() {
         try {
             if (this.webServer == null) this.webServer = new ServerSocket(port);
@@ -76,6 +79,9 @@ public class WebServer {
         }
     }
 
+    /**
+     * Close the web server.
+     */
     public void close() {
         try {
             if (webServer != null && !webServer.isClosed()) {
@@ -87,10 +93,20 @@ public class WebServer {
         }
     }
 
+    /**
+     * Get the port number the server is listening on.
+     *
+     * @return The port number.
+     */
     public int getPort() {
         return this.port;
     }
 
+    /**
+     * Change the port number the server is listening on.
+     *
+     * @param newPort The new port number.
+     */
     public void changePort(int newPort) {
         if (this.port != newPort) {
             port = newPort;
@@ -99,6 +115,11 @@ public class WebServer {
         }
     }
 
+    /**
+     * Set the error route for the server.
+     *
+     * @param errorRoute The error route.
+     */
     public void errorPage(AbstractRoute errorRoute) {
         this.errorRoute = errorRoute;
     }
