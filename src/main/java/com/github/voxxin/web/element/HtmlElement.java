@@ -210,28 +210,28 @@ public class HtmlElement {
      * @return The HTML string.
      */
     protected String htmlString() {
-        StringBuilder mainBuilder = new StringBuilder();
-        StringBuilder attributesBuilder = new StringBuilder();
+        StringBuilder builder = new StringBuilder();
 
+        builder.append("<").append(tagName);
         if (attributes != null) {
             for (String attribute : attributes) {
-                attributesBuilder.append(" ").append(attribute.trim());
+                builder.append(" ").append(attribute.trim());
             }
         }
-
-        mainBuilder.append("<").append(tagName).append(attributesBuilder).append(">");
+        builder.append(">");
 
         if (subElements != null) {
             for (HtmlElement element : subElements) {
-                mainBuilder.append(" ").append(element.htmlString());
+                builder.append("\n  ").append(element.htmlString());
             }
+            builder.append("\n");
         } else if (subElement != null) {
-            mainBuilder.append(" ").append(subElement);
+            builder.append(" ").append(subElement);
         }
 
-        mainBuilder.append("</").append(tagName).append(">");
+        builder.append("</").append(tagName).append(">");
 
-        return mainBuilder.toString();
+        return builder.toString();
     }
 
 }
