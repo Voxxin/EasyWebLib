@@ -222,7 +222,7 @@ public class HtmlElement {
             }
 
             mainBuilder.append("<").append(tagName).append(attributesBuilder).append("> ");
-            if (!subElements.isEmpty()) {
+            if (this.subElements != null && !this.subElements.isEmpty()) {
                 for (HtmlElement element : subElements) {
                     mainBuilder.append(" ").append(element.htmlString());
                 }
