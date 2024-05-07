@@ -32,10 +32,14 @@ public class HtmlParser {
             String attributes = matcher.group(2) != null ? matcher.group(2) : matcher.group(5);
             String innerContent = matcher.group(3);
 
+            System.out.println("1: " + matcher.group(1) + " 2: " + matcher.group(2) + " 3: " + matcher.group(3) + " 4: " + matcher.group(4) + " 5: " + matcher.group(5));
+
             if (tagName != null) {
                 if (innerContent != null) {
-                    elements.add(new HtmlElement(tagName, parseAttributes(attributes), innerContent));
+                    if (parseContent(innerContent).isEmpty()) elements.add(new HtmlElement(tagName, parseAttributes(attributes), innerContent));
+                        else elements.add(new HtmlElement(tagName, parseAttributes(attributes), parseContent(innerContent)));
                 } else {
+                    elements.add(new HtmlElement(tagName, parseAttributes(attributes), (HtmlElement) null));
                     openTags.push(tagName);
                 }
             }

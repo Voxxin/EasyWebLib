@@ -32,6 +32,25 @@ public class HtmlElement {
     }
 
     /**
+     * Constructor for HtmlElement with sub-elements.
+     *
+     * @param tagName     The tag name of the HTML element.
+     * @param attributes  The list of attributes for the HTML element.
+     * @param subElements The sub-elements contained within this HTML element.
+     */
+    public HtmlElement(@NotNull String tagName, @Nullable List<String> attributes, @Nullable List<HtmlElement> subElements) {
+        this.tagName = tagName;
+        this.attributes = attributes;
+        this.subElement = null;
+        this.subElements = new ArrayList<>();
+        if (subElements != null) {
+            for (HtmlElement element : subElements) {
+                addSubElement(element);
+            }
+        }
+    }
+
+    /**
      * Constructor for HtmlElement with text content.
      *
      * @param tagName    The tag name of the HTML element.
