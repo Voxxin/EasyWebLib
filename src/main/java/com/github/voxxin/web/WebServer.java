@@ -166,6 +166,11 @@ public class WebServer {
                 LOGGER.error("Invalid directory path.");
                 return;
             }
+
+            if (WebServer.class.getClassLoader().getResource(dirPath) == null) {
+                LOGGER.error("{} directory not found: {}", type, dirPath);
+                return;
+            }
             Path directory = type.equals("INTERNAL") ? Paths.get(WebServer.class.getClassLoader().getResource(dirPath).toURI()) : Paths.get(dirPath);
             if (!Files.exists(directory)) {
                 LOGGER.error(type + " directory not found: " + dirPath);
