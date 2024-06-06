@@ -12,6 +12,7 @@ import java.nio.file.Files;
 
 import java.io.*;
 import java.nio.file.Path;
+import java.util.regex.Pattern;
 
 public class FilePathRoute extends AbstractRoute {
     private static final Logger LOGGER = LoggerFactory.getLogger(FilePathRoute.class);
@@ -27,7 +28,7 @@ public class FilePathRoute extends AbstractRoute {
     }
 
     public FilePathRoute(byte[] bytes, String route) {
-        super(route + route.substring(route.lastIndexOf('/') + 1));
+        super(route + getFileNameAndExtension(route)[0]);
         this.route = route;
         this.bytes = bytes;
         this.file = null;
@@ -43,7 +44,7 @@ public class FilePathRoute extends AbstractRoute {
             }
         } else {
             try {
-                Path tempFile = Files.createTempFile("temp", getFileExtension(route));
+                Path tempFile = Files.createTempFile("tempImageWebconfig", "." + getFileNameAndExtension(route)[1]);
                 Files.write(tempFile, bytes);
                 try (InputStream inputStream = Files.newInputStream(tempFile)) {
                     writeResponse(inputStream, outputStream, Files.probeContentType(tempFile));
@@ -65,9 +66,18 @@ public class FilePathRoute extends AbstractRoute {
                 .statusMessage("OK").build());
     }
 
-    private static String getFileExtension(String fileName) {
-        int dotIndex = fileName.lastIndexOf('.');
-        return (dotIndex != -1) ? fileName.substring(dotIndex) : "";
+    private static String[] getFileNameAndExtension(String path) {
+        String[] parts = new String[2];
+        Pattern p = Pattern.compile("/([^/]+)\\.([^/]+)$");
+        java.util.regex.Matcher m = p.matcher(path);
+        if (m.find()) {
+            // Part 1 is the file name
+            parts[0] = m.group(1);
+
+            // Part 2 is the extension
+            parts[1] = m.group(2);
+        }
+        return parts;
     }
 }
 
