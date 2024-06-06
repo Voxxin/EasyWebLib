@@ -157,6 +157,11 @@ public class WebServer {
         addPublicDirPath(dirPath, publicPath, pathType, DirectoryPosition.NONE);
     }
 
+    /**
+     * Adds a single file to be served publicly.
+     * @param bytes The bytes of the file to be served.
+     * @param publicPath The public path where the directory should be accessible.
+     */
     public void addPublicFile(byte[] bytes, String publicPath) {
         FilePathRoute filePathRoute = new FilePathRoute(bytes, publicPath);
         if (!routes.contains(filePathRoute)) routes.add(filePathRoute);
