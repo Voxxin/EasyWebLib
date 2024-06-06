@@ -28,6 +28,7 @@ public class WebServer {
     private AbstractRoute errorRoute = null;
     public ArrayList<AbstractRoute> routes = new ArrayList<>();
     private ServerSocket webServer;
+    public Thread webServerThread;
 
     public WebServer(int port) {
         this.port = port;
@@ -42,48 +43,51 @@ public class WebServer {
      * Start the web server.
      */
     public void start() {
-        try {
-            if (this.webServer == null) this.webServer = new ServerSocket(port);
-            this.LOGGER.info("Started listening on port: " + port);
+        webServerThread = new Thread(() -> {
+            try {
+                if (this.webServer == null) this.webServer = new ServerSocket(port);
+                this.LOGGER.info("Started listening on port: " + port);
+                while (!this.webServer.isClosed()) {
+                    try (Socket clientSocket = this.webServer.accept();
+                         BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8))) {
 
-            while (!this.webServer.isClosed()) {
-                try (Socket clientSocket = this.webServer.accept();
-                     BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8))) {
-
-                    List<String> headers = new ArrayList<>();
-                    String line;
-                    int contentLength = -1;
-                    while ((line = in.readLine()) != null && !line.isEmpty()) {
-                        headers.add(line);
-                        if (line.startsWith("Content-Length: ")) {
-                            contentLength = Integer.parseInt(line.substring(16).trim());
+                        List<String> headers = new ArrayList<>();
+                        String line;
+                        int contentLength = -1;
+                        while ((line = in.readLine()) != null && !line.isEmpty()) {
+                            headers.add(line);
+                            if (line.startsWith("Content-Length: ")) {
+                                contentLength = Integer.parseInt(line.substring(16).trim());
+                            }
                         }
-                    }
 
-                    if (contentLength > 0) {
-                        char[] buffer = new char[contentLength];
-                        in.read(buffer);
-                        headers.add(0, String.valueOf(buffer));
-                    }
+                        if (contentLength > 0) {
+                            char[] buffer = new char[contentLength];
+                            in.read(buffer);
+                            headers.add(0, String.valueOf(buffer));
+                        }
 
-                    FormattedRequest formattedRequest = !headers.isEmpty() ? new FormattedRequest(headers) : null;
+                        FormattedRequest formattedRequest = !headers.isEmpty() ? new FormattedRequest(headers) : null;
 
-                    this.routes.stream()
-                            .filter(r -> formattedRequest != null && r.route.equals(formattedRequest.getPath()))
-                            .findAny()
-                            .ifPresentOrElse(
-                                    r -> r.handleRequest(formattedRequest, clientSocket),
-                                    () -> {
-                                        if (errorRoute != null) {
-                                            errorRoute.handleRequest(formattedRequest, clientSocket);
+                        this.routes.stream()
+                                .filter(r -> formattedRequest != null && r.route.equals(formattedRequest.getPath()))
+                                .findAny()
+                                .ifPresentOrElse(
+                                        r -> r.handleRequest(formattedRequest, clientSocket),
+                                        () -> {
+                                            if (errorRoute != null) {
+                                                errorRoute.handleRequest(formattedRequest, clientSocket);
+                                            }
                                         }
-                                    }
-                            );
+                                );
+                    }
                 }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        });
+
+        webServerThread.start();
     }
 
     /**
@@ -158,6 +162,10 @@ public class WebServer {
      */
     private void processDirPath(String dirPath, String publicPath, String type, DirectoryPosition directoryPosition) {
         try {
+            if (dirPath == null|| dirPath.isEmpty()) {
+                LOGGER.error("Invalid directory path.");
+                return;
+            }
             Path directory = type.equals("INTERNAL") ? Paths.get(WebServer.class.getClassLoader().getResource(dirPath).toURI()) : Paths.get(dirPath);
             if (!Files.exists(directory)) {
                 LOGGER.error(type + " directory not found: " + dirPath);
