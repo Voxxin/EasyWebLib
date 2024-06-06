@@ -7,8 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class HtmlElement {
-    private final String tagName;
-    private final List<String> attributes;
+    private String tagName;
+    private List<String> attributes;
     private List<HtmlElement> subElements;
     private String subElement;
 
@@ -132,6 +132,11 @@ public class HtmlElement {
     public String getTagName() {
         return this.tagName;
     }
+
+    public void setTagName(String tagName) {
+        this.tagName = tagName;
+    }
+
 
     /**
      * Get the list of attributes of this HtmlElement.

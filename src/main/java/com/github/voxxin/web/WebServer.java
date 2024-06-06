@@ -1,11 +1,18 @@
 package com.github.voxxin.web;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -122,5 +129,108 @@ public class WebServer {
      */
     public void errorPage(AbstractRoute errorRoute) {
         this.errorRoute = errorRoute;
+    }
+
+    /**
+     * Adds a directory path to be served publicly.
+     * @param dirPath The path of the directory to be served.
+     * @param publicPath The public path where the directory should be accessible.
+     * @param pathType The type of path, either INTERNAL or EXTERNAL.
+     * @param directoryPosition The position of the directory relative to the publicPath.
+     */
+    public void addPublicDirPath(String dirPath, String publicPath, PathType pathType, DirectoryPosition directoryPosition) {
+        switch (pathType) {
+            case INTERNAL:
+            case EXTERNAL:
+                processDirPath(dirPath, publicPath, pathType.toString(), directoryPosition);
+                break;
+            default:
+                LOGGER.error("Invalid path type: " + pathType);
+        }
+    }
+
+    /**
+     * Processes a directory path recursively.
+     * @param dirPath The path of the directory to process.
+     * @param publicPath The public path corresponding to the directory.
+     * @param type The type of path, either "INTERNAL" or "EXTERNAL".
+     * @param directoryPosition The position of the directory relative to the publicPath.
+     */
+    private void processDirPath(String dirPath, String publicPath, String type, DirectoryPosition directoryPosition) {
+        try {
+            Path directory = type.equals("INTERNAL") ? Paths.get(WebServer.class.getClassLoader().getResource(dirPath).toURI()) : Paths.get(dirPath);
+            if (!Files.exists(directory)) {
+                LOGGER.error(type + " directory not found: " + dirPath);
+                return;
+            }
+
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
+                for (Path path : stream) {
+                    if (Files.isDirectory(path)) {
+                        String newPath = dirPath + "/" + path.getFileName() + "/";
+                        String newPublicPath = "";
+
+                        if (directoryPosition == DirectoryPosition.CURRENT) newPublicPath = publicPath;
+                        else if (directoryPosition == DirectoryPosition.SUBDIRECTORY)
+                            newPublicPath = publicPath + path.getFileName() + "/";
+                        else continue;
+
+                        processDirPath(newPath, newPublicPath, type, directoryPosition);
+                    } else if (Files.isRegularFile(path)) {
+                        processPublicFile(path.toFile(), publicPath);
+                    }
+                }
+            } catch (IOException e) {
+                LOGGER.error("Error reading files in " + type.toLowerCase() + " directory: " + dirPath, e);
+            }
+        } catch (URISyntaxException e) {
+            LOGGER.error("Invalid directory path: " + dirPath, e);
+        }
+    }
+
+
+    /**
+     * Processes a public file and adds it to the routes.
+     * @param file The public file to be processed.
+     * @param publicPath The public path corresponding to the file.
+     */
+    private void processPublicFile(File file, String publicPath) {
+        FilePathRoute filePathRoute = new FilePathRoute(file, publicPath);
+        if (!routes.contains(filePathRoute)) routes.add(filePathRoute);
+    }
+
+    /**
+     * Enum representing the type of path.
+     */
+    public enum PathType {
+        /**
+         * Represents an internal path, typically referring to resources within the application.
+         */
+        INTERNAL,
+
+        /**
+         * Represents an external path, typically referring to resources outside the application.
+         */
+        EXTERNAL;
+    }
+
+    /**
+     * Enum representing the position of the directory relative to the publicPath.
+     */
+    public enum DirectoryPosition {
+        /**
+         * Indicates that the directory should not be included as a subsidiary div.
+         */
+        NONE,
+
+        /**
+         * Indicates that the directory should be included as a subsidiary div at the same level as the publicPath.
+         */
+        CURRENT,
+
+        /**
+         * Indicates that the directory should be included as a subsidiary div within the publicPath.
+         */
+        SUBDIRECTORY;
     }
 }

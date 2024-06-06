@@ -5,13 +5,13 @@ import java.util.List;
 
 public class FormattedRequest {
 
-    private final HashMap<String, String> headers;
-    private final String body;
-    private final String method;
+    private HashMap<String, String> headers;
+    private String body;
+    private String method;
     private String path;
-    private final String pathParameters;
-    private final HashMap<String, String> query;
-    private final String httpVersion;
+    private String pathParameters;
+    private HashMap<String, String> query;
+    private String httpVersion;
 
     /**
      * Constructor for FormattedRequest.
@@ -19,6 +19,8 @@ public class FormattedRequest {
      * @param inputHeaders The list of input headers.
      */
     public FormattedRequest(List<String> inputHeaders) {
+        if (!inputHeaders.get(0).contains("HTTP/")) return;
+
         this.body = (inputHeaders.get(0).split(" ").length > 1 && inputHeaders.get(0).split(" ")[2].contains("HTTP/")) ? null : inputHeaders.remove(0);
 
         String[] mainMethods = inputHeaders.remove(0).split(" ");

@@ -21,7 +21,6 @@ public class ErrorRoute extends AbstractRoute {
                         .statusCode(404)
                         .statusMessage("Not Found")
                         .build()
-                        .getBytes()
         );
         return outputStream;
     }

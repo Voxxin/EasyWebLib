@@ -2,6 +2,10 @@ package com.github.voxxin.web.request;
 
 import java.nio.charset.StandardCharsets;
 
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+
 public class FormattedResponse {
 
     private static final String DEFAULT_HTTP_VERSION = "HTTP/1.1";
@@ -12,6 +16,7 @@ public class FormattedResponse {
     private String statusMessage;
     private String contentType;
     private byte[] contentBytes;
+    private Map<String, String> customHeaders = new HashMap<>();
 
     /**
      * Set the HTTP version for the response.
@@ -80,22 +85,44 @@ public class FormattedResponse {
     }
 
     /**
+     * Add a custom header to the response.
+     *
+     * @param name  The name of the header.
+     * @param value The value of the header.
+     * @return The FormattedResponse instance.
+     */
+    public FormattedResponse addHeader(String name, String value) {
+        customHeaders.put(name, value);
+        return this;
+    }
+
+    /**
      * Build the formatted response.
      *
-     * @return The formatted response string.
+     * @return The formatted response as bytes.
      */
-    public String build() {
+    public byte[] build() {
         StringBuilder responseBuilder = new StringBuilder();
         responseBuilder.append(httpVersion).append(" ").append(statusCode).append(" ").append(statusMessage).append("\r\n")
                 .append("Content-Type: ").append(contentType).append("\r\n");
 
-        if (contentBytes != null) {
-            responseBuilder.append("Content-Length: ").append(contentBytes.length).append("\r\n\r\n")
-                    .append(new String(contentBytes, StandardCharsets.UTF_8));
-        } else {
-            responseBuilder.append("\r\n");
+        // Append custom headers
+        for (Map.Entry<String, String> entry : customHeaders.entrySet()) {
+            responseBuilder.append(entry.getKey()).append(": ").append(entry.getValue()).append("\r\n");
         }
 
-        return responseBuilder.toString();
+        if (contentBytes != null) {
+            responseBuilder.append("Content-Length: ").append(contentBytes.length).append("\r\n\r\n");
+            byte[] headerBytes = responseBuilder.toString().getBytes(StandardCharsets.UTF_8);
+
+            byte[] responseBytes = new byte[headerBytes.length + contentBytes.length];
+            System.arraycopy(headerBytes, 0, responseBytes, 0, headerBytes.length);
+            System.arraycopy(contentBytes, 0, responseBytes, headerBytes.length, contentBytes.length);
+
+            return responseBytes;
+        } else {
+            return responseBuilder.append("\r\n").toString().getBytes(StandardCharsets.UTF_8);
+        }
     }
 }
+

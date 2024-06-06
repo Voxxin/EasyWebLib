@@ -11,7 +11,8 @@ public class AbstractRoute {
     public final String route;
 
     public AbstractRoute(String route) {
-        this.route = route;
+        route = route.replaceAll("^/+", "");
+        this.route = "/"+route;
     }
 
     /**

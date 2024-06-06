@@ -54,11 +54,10 @@ public class IndexRoute extends AbstractRoute {
         outputStream.write(
                 new FormattedResponse()
                         .contentType("text/html")
-                        .content(welcomePage)
+                        .content(welcomePage.getBytes())
                         .statusCode(200)
                         .statusMessage("NICE ONE")
                         .build()
-                        .getBytes()
         );
 
         return super.handleRequests(request, outputStream);
