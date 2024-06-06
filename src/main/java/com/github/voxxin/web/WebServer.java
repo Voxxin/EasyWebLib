@@ -154,6 +154,16 @@ public class WebServer {
     }
 
     /**
+     * Adds a single file to be served publicly.
+     * @param dirPath The path of the directory to be served.
+     * @param publicPath The public path where the directory should be accessible.
+     * @param pathType The type of path, either INTERNAL or EXTERNAL.
+     */
+    public void addPublicFile(String dirPath, String publicPath, PathType pathType) {
+        addPublicDirPath(dirPath, publicPath, pathType, DirectoryPosition.NONE);
+    }
+
+    /**
      * Processes a directory path recursively.
      * @param dirPath The path of the directory to process.
      * @param publicPath The public path corresponding to the directory.
@@ -167,34 +177,47 @@ public class WebServer {
                 return;
             }
 
-            if (WebServer.class.getClassLoader().getResource(dirPath) == null) {
-                LOGGER.error("{} directory not found: {}", type, dirPath);
-                return;
+            Path directory = null;
+            if (type.equals("INTERNAL")) {
+                URL resourceUrl = WebServer.class.getClassLoader().getResource(dirPath);
+                if (resourceUrl == null) {
+                    LOGGER.error("{} directory not found: {}", type, dirPath);
+                    return;
+                }
+                directory = Paths.get(resourceUrl.toURI());
+            } else {
+                directory = Paths.get(dirPath);
             }
-            Path directory = type.equals("INTERNAL") ? Paths.get(WebServer.class.getClassLoader().getResource(dirPath).toURI()) : Paths.get(dirPath);
+
             if (!Files.exists(directory)) {
                 LOGGER.error(type + " directory not found: " + dirPath);
                 return;
             }
 
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
-                for (Path path : stream) {
-                    if (Files.isDirectory(path)) {
-                        String newPath = dirPath + "/" + path.getFileName() + "/";
-                        String newPublicPath = "";
+            if (Files.isDirectory(directory)) {
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
+                    for (Path path : stream) {
+                        if (Files.isDirectory(path)) {
+                            String newPath = dirPath + "/" + path.getFileName() + "/";
+                            String newPublicPath = "";
 
-                        if (directoryPosition == DirectoryPosition.CURRENT) newPublicPath = publicPath;
-                        else if (directoryPosition == DirectoryPosition.SUBDIRECTORY)
-                            newPublicPath = publicPath + path.getFileName() + "/";
-                        else continue;
+                            if (directoryPosition == DirectoryPosition.CURRENT) newPublicPath = publicPath;
+                            else if (directoryPosition == DirectoryPosition.SUBDIRECTORY)
+                                newPublicPath = publicPath + path.getFileName() + "/";
+                            else continue;
 
-                        processDirPath(newPath, newPublicPath, type, directoryPosition);
-                    } else if (Files.isRegularFile(path)) {
-                        processPublicFile(path.toFile(), publicPath);
+                            processDirPath(newPath, newPublicPath, type, directoryPosition);
+                        } else if (Files.isRegularFile(path)) {
+                            processPublicFile(path.toFile(), publicPath);
+                        }
                     }
+                } catch (IOException e) {
+                    LOGGER.error("Error reading files in " + type.toLowerCase() + " directory: " + dirPath, e);
                 }
-            } catch (IOException e) {
-                LOGGER.error("Error reading files in " + type.toLowerCase() + " directory: " + dirPath, e);
+            } else if (Files.isRegularFile(directory)) {
+                processPublicFile(directory.toFile(), publicPath);
+            } else {
+                LOGGER.error("Invalid directory: " + dirPath);
             }
         } catch (URISyntaxException e) {
             LOGGER.error("Invalid directory path: " + dirPath, e);
