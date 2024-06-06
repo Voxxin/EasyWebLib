@@ -157,6 +157,11 @@ public class WebServer {
         addPublicDirPath(dirPath, publicPath, pathType, DirectoryPosition.NONE);
     }
 
+    public void addPublicFile(byte[] bytes, String publicPath) {
+        FilePathRoute filePathRoute = new FilePathRoute(bytes, publicPath);
+        if (!routes.contains(filePathRoute)) routes.add(filePathRoute);
+    }
+
     /**
      * Processes a directory path recursively.
      * @param dirPath The path of the directory to process.
@@ -165,48 +170,22 @@ public class WebServer {
      * @param directoryPosition The position of the directory relative to the publicPath.
      */
     private void processDirPath(String dirPath, String publicPath, String type, DirectoryPosition directoryPosition) {
-        if (dirPath == null|| dirPath.isEmpty()) {
-            LOGGER.error("Invalid directory path.");
-            return;
-        }
-
-        Path directory = null;
-        if (type.equals("INTERNAL")) {
-            ClassLoader classLoader = WebServer.class.getClassLoader();
-            URL resourceUrl = classLoader.getResource(dirPath);
-
-            if (resourceUrl != null) {
-                try (InputStream resourceStream = classLoader.getResourceAsStream(dirPath)) {
-                    if (resourceStream != null) {
-                        byte[] bytes = resourceStream.readAllBytes();
-                        String extension = dirPath.substring(dirPath.lastIndexOf('.'));
-                        Path tempPath = Files.createTempFile("tempResource", extension);
-                        Files.write(tempPath, bytes);
-                        directory = tempPath;
-                    }
-                } catch (IOException e) {
-                    LOGGER.error("Failed to read or write resource: {}", dirPath, e);
-                }
-
-                try {
-                    directory = Paths.get(resourceUrl.toURI());
-                } catch (URISyntaxException | FileSystemNotFoundException e) {
-                    LOGGER.error("Invalid URI syntax or FileSystem not found for resource: {}", dirPath, e);
-                }
-            } else {
-                LOGGER.error("{} directory not found: {}", type, dirPath);
+        try {
+            if (dirPath == null|| dirPath.isEmpty()) {
+                LOGGER.error("Invalid directory path.");
+                return;
             }
-        }
-        else {
-            directory = Paths.get(dirPath);
-        }
 
-        if (!Files.exists(directory)) {
-            LOGGER.error(type + " directory not found: " + dirPath);
-            return;
-        }
+            if (WebServer.class.getClassLoader().getResource(dirPath) == null) {
+                LOGGER.error("{} directory not found: {}", type, dirPath);
+                return;
+            }
+            Path directory = type.equals("INTERNAL") ? Paths.get(WebServer.class.getClassLoader().getResource(dirPath).toURI()) : Paths.get(dirPath);
+            if (!Files.exists(directory)) {
+                LOGGER.error(type + " directory not found: " + dirPath);
+                return;
+            }
 
-        if (Files.isDirectory(directory)) {
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
                 for (Path path : stream) {
                     if (Files.isDirectory(path)) {
@@ -226,10 +205,8 @@ public class WebServer {
             } catch (IOException e) {
                 LOGGER.error("Error reading files in " + type.toLowerCase() + " directory: " + dirPath, e);
             }
-        } else if (Files.isRegularFile(directory)) {
-            processPublicFile(directory.toFile(), publicPath);
-        } else {
-            LOGGER.error("Invalid directory: " + dirPath);
+        } catch (URISyntaxException e) {
+            LOGGER.error("Invalid directory path: " + dirPath, e);
         }
     }
 
