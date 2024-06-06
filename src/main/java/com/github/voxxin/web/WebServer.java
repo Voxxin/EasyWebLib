@@ -176,18 +176,31 @@ public class WebServer {
      */
     private void processDirPath(String dirPath, String publicPath, String type, DirectoryPosition directoryPosition) {
         try {
-            if (dirPath == null|| dirPath.isEmpty()) {
+            if (dirPath == null || dirPath.isEmpty()) {
                 LOGGER.error("Invalid directory path.");
                 return;
             }
 
-            if (WebServer.class.getClassLoader().getResource(dirPath) == null) {
+            URL resourceURL = WebServer.class.getClassLoader().getResource(dirPath);
+            if (resourceURL == null) {
                 LOGGER.error("{} directory not found: {}", type, dirPath);
                 return;
             }
-            Path directory = type.equals("INTERNAL") ? Paths.get(WebServer.class.getClassLoader().getResource(dirPath).toURI()) : Paths.get(dirPath);
+
+            Path directory;
+            if (type.equals("INTERNAL")) {
+                try {
+                    directory = Paths.get(resourceURL.toURI());
+                } catch (URISyntaxException e) {
+                    LOGGER.error("Invalid directory path: {}", dirPath, e);
+                    return;
+                }
+            } else {
+                directory = Paths.get(dirPath);
+            }
+
             if (!Files.exists(directory)) {
-                LOGGER.error(type + " directory not found: " + dirPath);
+                LOGGER.error("{} directory not found: {}", type, dirPath);
                 return;
             }
 
@@ -208,13 +221,12 @@ public class WebServer {
                     }
                 }
             } catch (IOException e) {
-                LOGGER.error("Error reading files in " + type.toLowerCase() + " directory: " + dirPath, e);
+                LOGGER.error("Error reading files in {} directory: {}", type.toLowerCase(), dirPath, e);
             }
-        } catch (URISyntaxException e) {
-            LOGGER.error("Invalid directory path: " + dirPath, e);
+        } catch (Exception e) {
+            LOGGER.error("Error accessing directory path: {}", dirPath, e);
         }
     }
-
 
     /**
      * Processes a public file and adds it to the routes.
