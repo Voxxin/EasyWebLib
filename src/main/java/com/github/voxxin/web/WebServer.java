@@ -1,18 +1,12 @@
 package com.github.voxxin.web;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -171,56 +165,71 @@ public class WebServer {
      * @param directoryPosition The position of the directory relative to the publicPath.
      */
     private void processDirPath(String dirPath, String publicPath, String type, DirectoryPosition directoryPosition) {
-        try {
-            if (dirPath == null|| dirPath.isEmpty()) {
-                LOGGER.error("Invalid directory path.");
-                return;
-            }
+        if (dirPath == null|| dirPath.isEmpty()) {
+            LOGGER.error("Invalid directory path.");
+            return;
+        }
 
-            Path directory = null;
-            if (type.equals("INTERNAL")) {
-                URL resourceUrl = WebServer.class.getClassLoader().getResource(dirPath);
-                if (resourceUrl == null) {
-                    LOGGER.error("{} directory not found: {}", type, dirPath);
-                    return;
-                }
-                directory = Paths.get(resourceUrl.toURI());
-            } else {
-                directory = Paths.get(dirPath);
-            }
+        Path directory = null;
+        if (type.equals("INTERNAL")) {
+            ClassLoader classLoader = WebServer.class.getClassLoader();
+            URL resourceUrl = classLoader.getResource(dirPath);
 
-            if (!Files.exists(directory)) {
-                LOGGER.error(type + " directory not found: " + dirPath);
-                return;
-            }
-
-            if (Files.isDirectory(directory)) {
-                try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
-                    for (Path path : stream) {
-                        if (Files.isDirectory(path)) {
-                            String newPath = dirPath + "/" + path.getFileName() + "/";
-                            String newPublicPath = "";
-
-                            if (directoryPosition == DirectoryPosition.CURRENT) newPublicPath = publicPath;
-                            else if (directoryPosition == DirectoryPosition.SUBDIRECTORY)
-                                newPublicPath = publicPath + path.getFileName() + "/";
-                            else continue;
-
-                            processDirPath(newPath, newPublicPath, type, directoryPosition);
-                        } else if (Files.isRegularFile(path)) {
-                            processPublicFile(path.toFile(), publicPath);
-                        }
+            if (resourceUrl != null) {
+                try (InputStream resourceStream = classLoader.getResourceAsStream(dirPath)) {
+                    if (resourceStream != null) {
+                        byte[] bytes = resourceStream.readAllBytes();
+                        String extension = dirPath.substring(dirPath.lastIndexOf('.'));
+                        Path tempPath = Files.createTempFile("tempResource", extension);
+                        Files.write(tempPath, bytes);
+                        directory = tempPath;
                     }
                 } catch (IOException e) {
-                    LOGGER.error("Error reading files in " + type.toLowerCase() + " directory: " + dirPath, e);
+                    LOGGER.error("Failed to read or write resource: {}", dirPath, e);
                 }
-            } else if (Files.isRegularFile(directory)) {
-                processPublicFile(directory.toFile(), publicPath);
+
+                try {
+                    directory = Paths.get(resourceUrl.toURI());
+                } catch (URISyntaxException | FileSystemNotFoundException e) {
+                    LOGGER.error("Invalid URI syntax or FileSystem not found for resource: {}", dirPath, e);
+                }
             } else {
-                LOGGER.error("Invalid directory: " + dirPath);
+                LOGGER.error("{} directory not found: {}", type, dirPath);
             }
-        } catch (URISyntaxException e) {
-            LOGGER.error("Invalid directory path: " + dirPath, e);
+        }
+        else {
+            directory = Paths.get(dirPath);
+        }
+
+        if (!Files.exists(directory)) {
+            LOGGER.error(type + " directory not found: " + dirPath);
+            return;
+        }
+
+        if (Files.isDirectory(directory)) {
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
+                for (Path path : stream) {
+                    if (Files.isDirectory(path)) {
+                        String newPath = dirPath + "/" + path.getFileName() + "/";
+                        String newPublicPath = "";
+
+                        if (directoryPosition == DirectoryPosition.CURRENT) newPublicPath = publicPath;
+                        else if (directoryPosition == DirectoryPosition.SUBDIRECTORY)
+                            newPublicPath = publicPath + path.getFileName() + "/";
+                        else continue;
+
+                        processDirPath(newPath, newPublicPath, type, directoryPosition);
+                    } else if (Files.isRegularFile(path)) {
+                        processPublicFile(path.toFile(), publicPath);
+                    }
+                }
+            } catch (IOException e) {
+                LOGGER.error("Error reading files in " + type.toLowerCase() + " directory: " + dirPath, e);
+            }
+        } else if (Files.isRegularFile(directory)) {
+            processPublicFile(directory.toFile(), publicPath);
+        } else {
+            LOGGER.error("Invalid directory: " + dirPath);
         }
     }
 
