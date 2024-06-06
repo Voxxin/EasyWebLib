@@ -28,7 +28,7 @@ public class FilePathRoute extends AbstractRoute {
     }
 
     public FilePathRoute(byte[] bytes, String route) {
-        super(route + getFileNameAndExtension(route)[0]);
+        super(route);
         this.route = route;
         this.bytes = bytes;
         this.file = null;
