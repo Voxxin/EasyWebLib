@@ -2,7 +2,6 @@ package com.github.voxxin.web.request;
 
 import java.nio.charset.StandardCharsets;
 
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
