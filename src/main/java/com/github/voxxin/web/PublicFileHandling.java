@@ -7,15 +7,15 @@ import java.nio.file.*;
 import java.util.ArrayList;
 
 import static com.github.voxxin.web.FilePathRoute.LOGGER;
-import static com.github.voxxin.web.WebServer.DirectoryPosition.CURRENT;
-import static com.github.voxxin.web.WebServer.DirectoryPosition.SUBDIRECTORY;
 
 public class PublicFileHandling {
+    private final Thread webServerThread;
     private final ArrayList<AbstractRoute> routes;
     public final WebServer.PathType pathType;
     public final WebServer.DirectoryPosition directoryPosition;
 
-    public PublicFileHandling(ArrayList<AbstractRoute> routes, byte[] bytes, String publicPath, WebServer.PathType pathType, WebServer.DirectoryPosition directoryPosition) {
+    public PublicFileHandling(Thread webServerThread, ArrayList<AbstractRoute> routes, byte[] bytes, String publicPath, WebServer.PathType pathType, WebServer.DirectoryPosition directoryPosition) {
+        this.webServerThread = webServerThread;
         this.routes = routes;
         this.pathType = pathType;
         this.directoryPosition = directoryPosition;
@@ -23,8 +23,9 @@ public class PublicFileHandling {
         addPublicFile(bytes, publicPath);
     }
 
-    public PublicFileHandling(ArrayList<AbstractRoute> routes, String filePath, String publicPath, WebServer.PathType pathType, WebServer.DirectoryPosition directoryPosition) {
+    public PublicFileHandling(Thread webServerThread, ArrayList<AbstractRoute> routes, String filePath, String publicPath, WebServer.PathType pathType, WebServer.DirectoryPosition directoryPosition) {
         System.out.println("Constructor called with filePath: " + filePath);
+        this.webServerThread = webServerThread;
         this.routes = routes;
         this.pathType = pathType;
         this.directoryPosition = directoryPosition;
@@ -52,23 +53,24 @@ public class PublicFileHandling {
 
     private void handleDirectoryStructure(String pathStart, File outputFileDir) throws IOException {
         System.out.println("handleDirectoryStructure called with pathStart: " + pathStart + " and outputFileDir: " + outputFileDir.getPath());
-        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(pathStart)) {
-            URL url = getClass().getClassLoader().getResource(pathStart);
-            File[] files = outputFileDir.listFiles();
-            if (url != null)
-                files = new File(url.toURI()).listFiles();
+
+        // Get resource URL
+        URL url = getClass().getClassLoader().getResource(pathStart);
+        if (url == null) throw new FileNotFoundException("Resource not found: " + pathStart);
+
+        // List files in the output directory
+        File[] files = outputFileDir.listFiles();
+        if (files != null) {
             for (File file : files) {
-                System.out.println(file.getName());
-                if (file.isDirectory()) {
-                    handleDirectory(file, pathStart + file.getName() + "/");
-                }
+                System.out.println("Existing file: " + file.getName());
             }
+        }
 
-
-            if (inputStream == null) throw new FileNotFoundException("Resource not found: " + pathStart);
-
+        try (InputStream inputStream = url.openStream()) {
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
             String line;
+
+            // Read each line from the resource
             while ((line = reader.readLine()) != null) {
                 System.out.println("Reading line: " + line);
                 Path targetPath = outputFileDir.toPath().resolve(line);
@@ -85,13 +87,13 @@ public class PublicFileHandling {
                     // Create directory
                     Files.createDirectories(targetPath);
                     System.out.println("Directory created at: " + targetPath.toString());
+                    // Recursively handle the directory structure
                     handleDirectoryStructure(pathStart + line + "/", targetPath.toFile());
                 }
             }
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
         }
     }
+
 
     private void handleDirectory(File file, String publicPath) {
         System.out.println("handleDirectory called with file: " + file.getPath() + " and publicPath: " + publicPath);

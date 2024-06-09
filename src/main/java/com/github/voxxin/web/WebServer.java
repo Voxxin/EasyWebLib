@@ -136,7 +136,7 @@ public class WebServer {
             case EXTERNAL:
                 System.out.println("Creating PublicFileHandling instance with: " + dirPath + ", " + publicPath +
                         ", " + pathType + ", " + directoryPosition);
-                new PublicFileHandling(routes, dirPath, publicPath, pathType, directoryPosition);
+                new PublicFileHandling(webServerThread, routes, dirPath, publicPath, pathType, directoryPosition);
                 break;
             default:
                 System.out.println("Invalid path type: " + pathType);
@@ -147,7 +147,7 @@ public class WebServer {
     public void addPublicDirPath(byte[] bytes, String publicPath) {
         System.out.println("addPublicDirPath called with bytes of length: " + bytes.length + ", publicPath: " + publicPath);
         System.out.println("Creating PublicFileHandling instance with bytes, " + publicPath + ", INTERNAL, CURRENT");
-        new PublicFileHandling(routes, bytes, publicPath, INTERNAL, DirectoryPosition.CURRENT);
+        new PublicFileHandling(webServerThread, routes, bytes, publicPath, INTERNAL, DirectoryPosition.CURRENT);
     }
 
 
