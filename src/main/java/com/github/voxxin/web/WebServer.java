@@ -129,19 +129,27 @@ public class WebServer {
     }
 
     public void addPublicDirPath(String dirPath, String publicPath, PathType pathType, DirectoryPosition directoryPosition) {
+        System.out.println("addPublicDirPath called with dirPath: " + dirPath + ", publicPath: " + publicPath +
+                ", pathType: " + pathType + ", directoryPosition: " + directoryPosition);
         switch (pathType) {
             case INTERNAL:
             case EXTERNAL:
+                System.out.println("Creating PublicFileHandling instance with: " + dirPath + ", " + publicPath +
+                        ", " + pathType + ", " + directoryPosition);
                 new PublicFileHandling(routes, dirPath, publicPath, pathType, directoryPosition);
                 break;
             default:
-                LOGGER.error("Invalid path type: " + pathType);
+                System.out.println("Invalid path type: " + pathType);
+                LOGGER.error("Invalid path type: {}", pathType);
         }
     }
 
     public void addPublicDirPath(byte[] bytes, String publicPath) {
+        System.out.println("addPublicDirPath called with bytes of length: " + bytes.length + ", publicPath: " + publicPath);
+        System.out.println("Creating PublicFileHandling instance with bytes, " + publicPath + ", INTERNAL, CURRENT");
         new PublicFileHandling(routes, bytes, publicPath, INTERNAL, DirectoryPosition.CURRENT);
     }
+
 
     /**
      * Enum representing the type of path.
