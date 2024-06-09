@@ -64,6 +64,8 @@ public class PublicFileHandling {
             for (File file : files) {
                 System.out.println("Existing file: " + file.getName());
             }
+        } else {
+            System.out.println("No files found in output directory: " + outputFileDir.getPath());
         }
 
         try (InputStream inputStream = url.openStream()) {
@@ -78,8 +80,10 @@ public class PublicFileHandling {
                 if (line.contains(".")) {
                     // Create file
                     try (InputStream fileInputStream = getClass().getClassLoader().getResourceAsStream(pathStart + line)) {
-                        if (fileInputStream == null)
-                            throw new FileNotFoundException("Resource not found: " + pathStart + line);
+                        if (fileInputStream == null) {
+                            System.err.println("File not found in resource: " + pathStart + line);
+                            continue;
+                        }
                         Files.copy(fileInputStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
                         System.out.println("File created at: " + targetPath.toString());
                     }
