@@ -1,10 +1,14 @@
 package com.github.voxxin.web;
 
 import java.io.*;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.*;
 import java.util.ArrayList;
 
 import static com.github.voxxin.web.FilePathRoute.LOGGER;
+import static com.github.voxxin.web.WebServer.DirectoryPosition.CURRENT;
+import static com.github.voxxin.web.WebServer.DirectoryPosition.SUBDIRECTORY;
 
 public class PublicFileHandling {
     private final ArrayList<AbstractRoute> routes;
@@ -19,22 +23,22 @@ public class PublicFileHandling {
         addPublicFile(bytes, publicPath);
     }
 
-    public PublicFileHandling(Thread thread, ArrayList<AbstractRoute> routes, String filePath, String publicPath, WebServer.PathType pathType, WebServer.DirectoryPosition directoryPosition) {
+    public PublicFileHandling(ArrayList<AbstractRoute> routes, String filePath, String publicPath, WebServer.PathType pathType, WebServer.DirectoryPosition directoryPosition) {
         System.out.println("Constructor called with filePath: " + filePath);
         this.routes = routes;
         this.pathType = pathType;
         this.directoryPosition = directoryPosition;
 
-        handleFile(thread, filePath, publicPath);
+        handleFile(filePath, publicPath);
     }
 
-    public void handleFile(Thread thread, String filePath, String publicPath) {
+    public void handleFile(String filePath, String publicPath) {
         System.out.println("handleFile called with filePath: " + filePath + " and publicPath: " + publicPath);
         try {
             Path tempDirPath = Files.createTempDirectory("temporaryDirectoryWebConfig");
             System.out.println("Temporary directory created at: " + tempDirPath.toString());
             if (pathType == WebServer.PathType.INTERNAL) {
-                handleDirectoryStructure(thread, filePath, tempDirPath.toFile());
+                handleDirectoryStructure(filePath, tempDirPath.toFile());
             } else {
                 handleDirectory(Paths.get(filePath).toFile(), publicPath);
             }
@@ -46,9 +50,21 @@ public class PublicFileHandling {
         }
     }
 
-    private void handleDirectoryStructure(Thread thread, String pathStart, File outputFileDir) throws IOException {
+    private void handleDirectoryStructure(String pathStart, File outputFileDir) throws IOException {
         System.out.println("handleDirectoryStructure called with pathStart: " + pathStart + " and outputFileDir: " + outputFileDir.getPath());
-        try (InputStream inputStream = thread.getContextClassLoader().getResourceAsStream(pathStart)) {
+        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(pathStart)) {
+            URL url = getClass().getClassLoader().getResource(pathStart);
+            File[] files = outputFileDir.listFiles();
+            if (url != null)
+                files = new File(url.toURI()).listFiles();
+            for (File file : files) {
+                System.out.println(file.getName());
+                if (file.isDirectory()) {
+                    handleDirectory(file, pathStart + file.getName() + "/");
+                }
+            }
+
+
             if (inputStream == null) throw new FileNotFoundException("Resource not found: " + pathStart);
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
@@ -60,7 +76,8 @@ public class PublicFileHandling {
                 if (line.contains(".")) {
                     // Create file
                     try (InputStream fileInputStream = getClass().getClassLoader().getResourceAsStream(pathStart + line)) {
-                        if (fileInputStream == null) throw new FileNotFoundException("Resource not found: " + pathStart + line);
+                        if (fileInputStream == null)
+                            throw new FileNotFoundException("Resource not found: " + pathStart + line);
                         Files.copy(fileInputStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
                         System.out.println("File created at: " + targetPath.toString());
                     }
@@ -68,9 +85,11 @@ public class PublicFileHandling {
                     // Create directory
                     Files.createDirectories(targetPath);
                     System.out.println("Directory created at: " + targetPath.toString());
-                    handleDirectoryStructure(thread, pathStart + line + "/", targetPath.toFile());
+                    handleDirectoryStructure(pathStart + line + "/", targetPath.toFile());
                 }
             }
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
         }
     }
 

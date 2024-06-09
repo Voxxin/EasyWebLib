@@ -25,13 +25,11 @@ public class WebServer {
 
     public WebServer(int port) {
         this.port = port;
-        this.start();
     }
 
     public WebServer(int port, AbstractRoute... routes) {
         this.port = port;
         this.routes.addAll(Arrays.asList(routes));
-        this.start();
     }
 
     /**
@@ -138,7 +136,7 @@ public class WebServer {
             case EXTERNAL:
                 System.out.println("Creating PublicFileHandling instance with: " + dirPath + ", " + publicPath +
                         ", " + pathType + ", " + directoryPosition);
-                new PublicFileHandling(webServerThread, routes, dirPath, publicPath, pathType, directoryPosition);
+                new PublicFileHandling(routes, dirPath, publicPath, pathType, directoryPosition);
                 break;
             default:
                 System.out.println("Invalid path type: " + pathType);
