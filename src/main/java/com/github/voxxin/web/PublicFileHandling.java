@@ -1,20 +1,25 @@
 package com.github.voxxin.web;
 
 import java.io.*;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.Objects;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 import static com.github.voxxin.web.FilePathRoute.LOGGER;
 
-public class PublicFileHandling {
+class PublicFileHandling {
+    private final Class<?> enclosingClass;
     private final ArrayList<AbstractRoute> routes;
     public final WebServer.PathType pathType;
     public final WebServer.DirectoryPosition directoryPosition;
 
     public PublicFileHandling(ArrayList<AbstractRoute> routes, byte[] bytes, String publicPath, WebServer.PathType pathType, WebServer.DirectoryPosition directoryPosition) {
+        this.enclosingClass = this.getClass();
         this.routes = routes;
         this.pathType = pathType;
         this.directoryPosition = directoryPosition;
@@ -22,7 +27,8 @@ public class PublicFileHandling {
         addPublicFile(bytes, publicPath);
     }
 
-    public PublicFileHandling(ArrayList<AbstractRoute> routes, String filePath, String publicPath, WebServer.PathType pathType, WebServer.DirectoryPosition directoryPosition) {
+    public PublicFileHandling(Class<?> enclosingClass, ArrayList<AbstractRoute> routes, String filePath, String publicPath, WebServer.PathType pathType, WebServer.DirectoryPosition directoryPosition) {
+        this.enclosingClass = enclosingClass == null ? this.getClass() : enclosingClass;
         this.routes = routes;
         this.pathType = pathType;
         this.directoryPosition = directoryPosition;
@@ -41,14 +47,15 @@ public class PublicFileHandling {
             }
 
             handleDirectory(Paths.get(tempDirPath.toFile().getPath() + (filePath.startsWith("/") ? "" : "/") + filePath).toFile(), publicPath);
-        } catch (IOException e) {
+        } catch (IOException | URISyntaxException e) {
             LOGGER.error("Error handling file: {}", filePath, e);
             throw new RuntimeException("Error handling file: " + e.getMessage(), e);
         }
     }
 
-    private void handleDirectoryStructure(String pathStart, File outputFileDir) throws IOException {
-        final File jarFile = new File(getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
+    private void handleDirectoryStructure(String pathStart, File outputFileDir) throws IOException, URISyntaxException {
+
+        final File jarFile = new File(enclosingClass.getProtectionDomain().getCodeSource().getLocation().getPath());
 
         if (jarFile.isFile()) {
             try (JarFile jar = new JarFile(jarFile)) {
@@ -60,36 +67,54 @@ public class PublicFileHandling {
                         pathStart += "/";
                     }
 
-                    String[] directories = pathStart.split("/");
-                    Path targetPath = outputFileDir.toPath();
-                    for (String directory : directories) {
-                        targetPath = targetPath.resolve(directory);
-                        if (!Files.exists(targetPath)) {
-                            Files.createDirectories(targetPath);
-                        }
-                    }
-
                     if (name.startsWith(pathStart) && !entry.isDirectory()) {
-                        targetPath = outputFileDir.toPath().resolve(name);
+                        Path targetPath = outputFileDir.toPath().resolve(name);
 
                         try (InputStream fileInputStream = jar.getInputStream(entry)) {
-                            if (fileInputStream == null) {
-                                continue;
+                            if (fileInputStream != null) {
+                                if (!Files.exists(targetPath.getParent())) {
+                                    Files.createDirectories(targetPath.getParent());
+                                }
+                                Files.copy(fileInputStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
                             }
-                            if (!Files.exists(targetPath.getParent())) {
-                                Files.createDirectories(targetPath.getParent());
-                            }
-                            Files.copy(fileInputStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
                         }
                     }
                 }
             }
+        } else { // Inside an IDE -- AKA direct access to jar files
+            // Create the directory files
+            Path targetPath = outputFileDir.toPath().resolve(pathStart);
+            Files.createDirectories(targetPath);
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getClassLoader().getResourceAsStream(pathStart)))) {
+                String finalPathStart = pathStart;
+                reader.lines().forEach(line -> {
+                    Path fileOrDirPath = targetPath.resolve(line);
+                    try {
+                        if (line.contains(".")) {
+                            try (InputStream fileInputStream = getClass().getClassLoader().getResourceAsStream(finalPathStart + line)) {
+                                if (fileInputStream == null)
+                                    throw new FileNotFoundException("Resource not found: " + finalPathStart + line);
+                                Files.copy(fileInputStream, fileOrDirPath, StandardCopyOption.REPLACE_EXISTING);
+                            }
+                        } else {
+                            Files.createDirectories(fileOrDirPath);
+                            handleDirectoryStructure(finalPathStart + line + "/", fileOrDirPath.toFile());
+                        }
+                    } catch (IOException | URISyntaxException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+
+
     }
 
-    private void handleDirectory(File file, String publicPath) {
-        System.out.println(file.toPath().toString());
 
+        private void handleDirectory(File file, String publicPath) {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(file.toPath())) {
             for (Path path : stream) {
                 if (Files.isDirectory(path)) {

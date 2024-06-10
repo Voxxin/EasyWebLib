@@ -128,11 +128,11 @@ public class WebServer {
         this.errorRoute = errorRoute;
     }
 
-    public void addPublicDirPath(String dirPath, String publicPath, PathType pathType, DirectoryPosition directoryPosition) {
+    public void addPublicDirPath(Class<?> callingClass, String dirPath, String publicPath, PathType pathType, DirectoryPosition directoryPosition) {
         switch (pathType) {
             case INTERNAL:
             case EXTERNAL:
-                new PublicFileHandling(routes, dirPath, publicPath, pathType, directoryPosition);
+                new PublicFileHandling(callingClass, routes, dirPath, publicPath, pathType, directoryPosition);
                 break;
             default:
                 LOGGER.error("Invalid path type: {}", pathType);
@@ -142,7 +142,6 @@ public class WebServer {
     public void addPublicDirPath(byte[] bytes, String publicPath) {
         new PublicFileHandling(routes, bytes, publicPath, INTERNAL, DirectoryPosition.CURRENT);
     }
-
 
     /**
      * Enum representing the type of path.
