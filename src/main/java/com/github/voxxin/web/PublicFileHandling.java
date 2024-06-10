@@ -5,6 +5,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.*;
 import java.util.ArrayList;
+import java.util.Objects;
 
 import static com.github.voxxin.web.FilePathRoute.LOGGER;
 
@@ -55,47 +56,59 @@ public class PublicFileHandling {
         System.out.println("handleDirectoryStructure called with pathStart: " + pathStart + " and outputFileDir: " + outputFileDir.getPath());
 
         // Get resource URL
-        URL url = getClass().getClassLoader().getResource(pathStart);
-        if (url == null) throw new FileNotFoundException("Resource not found: " + pathStart);
-
-        // List files in the output directory
-        File[] files = outputFileDir.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                System.out.println("Existing file: " + file.getName());
-            }
-        } else {
-            System.out.println("No files found in output directory: " + outputFileDir.getPath());
+        URL url = Thread.currentThread().getContextClassLoader().getResource(pathStart);
+        if (url == null) {
+            throw new FileNotFoundException("Resource not found: " + pathStart);
         }
 
-        try (InputStream inputStream = url.openStream()) {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-            String line;
-
-            // Read each line from the resource
-            while ((line = reader.readLine()) != null) {
-                System.out.println("Reading line: " + line);
-                Path targetPath = outputFileDir.toPath().resolve(line);
-
-                if (line.contains(".")) {
-                    // Create file
-                    try (InputStream fileInputStream = getClass().getClassLoader().getResourceAsStream(pathStart + line)) {
-                        if (fileInputStream == null) {
-                            System.err.println("File not found in resource: " + pathStart + line);
-                            continue;
+        try {
+            Path sourcePath = Paths.get(url.toURI());
+            Files.walk(sourcePath)
+                    .forEach(source -> {
+                        try {
+                            Path target = outputFileDir.toPath().resolve(sourcePath.relativize(source));
+                            if (Files.isDirectory(source)) {
+                                Files.createDirectories(target);
+                            } else {
+                                Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+                                System.out.println("File copied from: " + source + " to: " + target);
+                            }
+                        } catch (IOException e) {
+                            System.err.println("Error copying file: " + e.getMessage());
                         }
-                        Files.copy(fileInputStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
-                        System.out.println("File created at: " + targetPath.toString());
-                    }
-                } else {
-                    // Create directory
-                    Files.createDirectories(targetPath);
-                    System.out.println("Directory created at: " + targetPath.toString());
-                    // Recursively handle the directory structure
-                    handleDirectoryStructure(pathStart + line + "/", targetPath.toFile());
-                }
-            }
+                    });
+        } catch (URISyntaxException e) {
+            throw new IOException("Invalid URI: " + e.getMessage());
         }
+
+//        try (InputStream inputStream = url.openStream()) {
+//            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+//            String line;
+//
+//            // Read each line from the resource
+//            while ((line = reader.readLine()) != null) {
+//                System.out.println("Reading line: " + line);
+//                Path targetPath = outputFileDir.toPath().resolve(line);
+//
+//                if (line.contains(".")) {
+//                    // Create file
+//                    try (InputStream fileInputStream = getClass().getClassLoader().getResourceAsStream(pathStart + line)) {
+//                        if (fileInputStream == null) {
+//                            System.err.println("File not found in resource: " + pathStart + line);
+//                            continue;
+//                        }
+//                        Files.copy(fileInputStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
+//                        System.out.println("File created at: " + targetPath.toString());
+//                    }
+//                } else {
+//                    // Create directory
+//                    Files.createDirectories(targetPath);
+//                    System.out.println("Directory created at: " + targetPath.toString());
+//                    // Recursively handle the directory structure
+//                    handleDirectoryStructure(pathStart + line + "/", targetPath.toFile());
+//                }
+//            }
+//        }
     }
 
 
