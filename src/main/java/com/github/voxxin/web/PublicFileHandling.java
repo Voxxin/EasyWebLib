@@ -61,25 +61,32 @@ public class PublicFileHandling {
             throw new FileNotFoundException("Resource not found: " + pathStart);
         }
 
-        try {
-            Path sourcePath = Paths.get(url.toURI());
-            Files.walk(sourcePath)
-                    .forEach(source -> {
-                        try {
-                            Path target = outputFileDir.toPath().resolve(sourcePath.relativize(source));
-                            if (Files.isDirectory(source)) {
-                                Files.createDirectories(target);
-                            } else {
-                                Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
-                                System.out.println("File copied from: " + source + " to: " + target);
-                            }
-                        } catch (IOException e) {
-                            System.err.println("Error copying file: " + e.getMessage());
-                        }
-                    });
-        } catch (URISyntaxException e) {
-            throw new IOException("Invalid URI: " + e.getMessage());
+        File file = new File(url.getPath());
+        for (File files : file.listFiles()) {
+            System.out.println("File: " + files.getName());
         }
+
+//        try {
+//            Path sourcePath = Paths.get(url.toURI());
+//            Files.walk(sourcePath)
+//                    .forEach(source -> {
+//                        try {
+//                            Path target = outputFileDir.toPath().resolve(sourcePath.relativize(source));
+//                            if (Files.isDirectory(source)) {
+//                                Files.createDirectories(target);
+//                            } else {
+//                                Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+//                                System.out.println("File copied from: " + source + " to: " + target);
+//                            }
+//                        } catch (IOException e) {
+//                            System.err.println("Error copying file: " + e.getMessage());
+//                        }
+//                    });
+//        } catch (URISyntaxException e) {
+//            throw new IOException("Invalid URI: " + e.getMessage());
+//        }
+
+
 
 //        try (InputStream inputStream = url.openStream()) {
 //            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
