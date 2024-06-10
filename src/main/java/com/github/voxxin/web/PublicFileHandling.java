@@ -5,7 +5,10 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.*;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.Objects;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 import static com.github.voxxin.web.FilePathRoute.LOGGER;
 
@@ -53,18 +56,47 @@ public class PublicFileHandling {
     }
 
     private void handleDirectoryStructure(String pathStart, File outputFileDir) throws IOException {
-        System.out.println("handleDirectoryStructure called with pathStart: " + pathStart + " and outputFileDir: " + outputFileDir.getPath());
+        final File jarFile = new File(getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
 
-        // Get resource URL
-        URL url = Thread.currentThread().getContextClassLoader().getResource(pathStart);
-        if (url == null) {
-            throw new FileNotFoundException("Resource not found: " + pathStart);
+        if(jarFile.isFile()) {  // Run with JAR file
+            final JarFile jar = new JarFile(jarFile);
+            final Enumeration<JarEntry> entries = jar.entries(); //gives ALL entries in jar
+            while(entries.hasMoreElements()) {
+                final String name = entries.nextElement().getName();
+                if (name.startsWith(pathStart + "/")) { //filter according to the path
+                    System.out.println(name);
+                }
+            }
+            jar.close();
+        } else { // Run with IDE
+            final URL url = PublicFileHandling.class.getResource("/" + pathStart);
+            if (url != null) {
+                try {
+                    final File apps = new File(url.toURI());
+                    for (File app : apps.listFiles()) {
+                        System.out.println(app);
+                    }
+                } catch (URISyntaxException ex) {
+                    // never happens
+                }
+            }
         }
 
-        File file = new File(url.getPath());
-        for (File files : file.listFiles()) {
-            System.out.println("File: " + files.getName());
-        }
+    }
+
+//    private void handleDirectoryStructure(String pathStart, File outputFileDir) throws IOException {
+//        System.out.println("handleDirectoryStructure called with pathStart: " + pathStart + " and outputFileDir: " + outputFileDir.getPath());
+//
+//        // Get resource URL
+//        URL url = Thread.currentThread().getContextClassLoader().getResource(pathStart);
+//        if (url == null) {
+//            throw new FileNotFoundException("Resource not found: " + pathStart);
+//        }
+//
+//        File file = new File(url.getPath());
+//        for (File files : file.listFiles()) {
+//            System.out.println("File: " + files.getName());
+//        }
 
 //        try {
 //            Path sourcePath = Paths.get(url.toURI());
@@ -116,7 +148,7 @@ public class PublicFileHandling {
 //                }
 //            }
 //        }
-    }
+//    }
 
 
     private void handleDirectory(File file, String publicPath) {
