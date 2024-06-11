@@ -139,12 +139,67 @@ public class HtmlElement {
 
 
     /**
-     * Get the list of attributes of this HtmlElement.
+     * Retrieve the list of attributes associated with this HtmlElement.
      *
      * @return The list of attributes.
      */
     public List<String> getAttributes() {
         return attributes;
+    }
+
+    /**
+     * Add an attribute to this HtmlElement.
+     *
+     * @param attributeType  The type of the attribute.
+     * @param attributeValue The value of the attribute.
+     */
+    public void addAttribute(String attributeType, String attributeValue) {
+        this.attributes.add(attributeType + "=\"" + attributeValue + "\"");
+    }
+
+    /**
+     * Add an attribute with multiple values to this HtmlElement.
+     *
+     * @param attributeType   The type of the attribute.
+     * @param attributeValues The list of values for the attribute.
+     */
+    public void addAttribute(String attributeType, List<String> attributeValues) {
+        String attributeValue = String.join(" ", attributeValues);
+        this.attributes.add(attributeType + "=\"" + attributeValue + "\"");
+    }
+
+    /**
+     * Add multiple attributes to this HtmlElement.
+     *
+     * @param attributes The list of attributes to add.
+     */
+    public void addAttributes(List<String> attributes) {
+        this.attributes.addAll(attributes);
+    }
+
+    /**
+     * Update the attributes of this HtmlElement with the provided list.
+     *
+     * @param attributes The new list of attributes to set.
+     */
+    public void setAttributes(List<String> attributes) {
+        this.attributes = attributes;
+    }
+
+    /**
+     * Remove a specific attribute from this HtmlElement.
+     *
+     * @param attribute The attribute to remove.
+     */
+    public void removeAttribute(String attribute) {
+        this.attributes.remove(attribute);
+    }
+
+    /**
+     * Clear all attributes from this HtmlElement.
+     */
+    public void clearAttributes() {
+        this.attributes.clear();
     }
 
     /**
