@@ -23,8 +23,8 @@ public class FormattedRequest {
         if (inputHeaders.get(0).contains("HTTP/")) hasBody = false;
         else if (inputHeaders.get(1).contains("HTTP/")) hasBody = true;
         else return;
-        
-        if (hasBody) this.body = (inputHeaders.get(0).split(" ").length > 1 && inputHeaders.get(0).split(" ")[2].contains("HTTP/")) ? null : inputHeaders.remove(0);
+
+        if (hasBody) { this.body = inputHeaders.get(0); inputHeaders.remove(0); }
 
         String[] mainMethods = inputHeaders.remove(0).split(" ");
         this.method = mainMethods[0];
