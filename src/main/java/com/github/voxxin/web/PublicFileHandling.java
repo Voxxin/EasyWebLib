@@ -6,6 +6,7 @@ import java.net.URL;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -49,14 +50,18 @@ class PublicFileHandling {
         List<String> paths = new ArrayList<>();
 
         if (pathType == WebServer.PathType.INTERNAL) {
-            File jarFile = new File(enclosingClass.getProtectionDomain().getCodeSource().getLocation().getPath());
+            final File jarFile = new File(enclosingClass.getProtectionDomain().getCodeSource().getLocation().getPath());
 
             if (jarFile.isFile()) {
                 try (JarFile jar = new JarFile(jarFile)) {
-                    jar.stream()
-                            .filter(entry -> !entry.isDirectory() && entry.getName().startsWith(pathStart))
-                            .map(JarEntry::getName)
-                            .forEach(paths::add);
+                    Enumeration<JarEntry> entries = jar.entries();
+                    while (entries.hasMoreElements()) {
+                        JarEntry entry = entries.nextElement();
+                        if (entry.isDirectory() || !entry.getName().startsWith(pathStart)) continue;
+                        if (!paths.contains(entry.getName())) {
+                            paths.add(entry.getName());
+                        }
+                    }
                 } catch (IOException e) {
                     System.err.println("Error reading JAR file: " + e.getMessage());
                 }
@@ -99,15 +104,14 @@ class PublicFileHandling {
 
     private void handleDirectory(List<String> routes, String publicPath) throws URISyntaxException, IOException {
         for (String route : routes) {
+
             boolean isInternal = pathType == WebServer.PathType.INTERNAL;
             String pathWithoutOriginal = route.replaceFirst("^.*" + filePath, "");
             if (!pathWithoutOriginal.contains(".")) continue; // Skip directories
 
             if (directoryPosition == WebServer.DirectoryPosition.CURRENT) {
-                URL url = isInternal ? enclosingClass.getClassLoader().getResource(route) : new URL(route);
-                if (url == null) continue;
-                File file = new File(url.toURI());
-                addPublicFile(Files.readAllBytes(file.toPath()), publicPath + file.getName());
+                String fileName = pathWithoutOriginal.split("/")[pathWithoutOriginal.split("/").length - 1];
+                addPublicFile(isInternal ? getInternalFile(route) : Files.readAllBytes(new File(route).toPath()), publicPath + fileName);
             }
 
             ArrayList<String> split = new ArrayList<>(Arrays.asList(pathWithoutOriginal.split("/")));
@@ -115,12 +119,44 @@ class PublicFileHandling {
 
             if (directoryPosition == WebServer.DirectoryPosition.NONE && !split.isEmpty()) continue;
             String sb = String.join("/", split);
+            if (!sb.isEmpty()) sb = sb+"/";
 
-            URL url = isInternal ? enclosingClass.getClassLoader().getResource(route) : new URL(route);
-            if (url == null) continue;
-            File file = new File(url.toURI());
-            addPublicFile(Files.readAllBytes(file.toPath()), publicPath + sb + file.getName());
+            String fileName = pathWithoutOriginal.split("/")[pathWithoutOriginal.split("/").length - 1];
+            addPublicFile(isInternal ? getInternalFile(route) : Files.readAllBytes(new File(route).toPath()), publicPath + sb + fileName);
         }
+    }
+
+    public byte[] getInternalFile(String filePath) throws IOException, URISyntaxException {
+        final File jarFile = new File(enclosingClass.getProtectionDomain().getCodeSource().getLocation().getPath());
+        byte[] bytes = null;
+        if (jarFile.isFile()) {
+            try (JarFile jar = new JarFile(jarFile)) {
+                Enumeration<JarEntry> entries = jar.entries();
+                while (entries.hasMoreElements()) {
+                    JarEntry entry = entries.nextElement();
+                    String path = entry.getName();
+                    if (path.equals(filePath)) {
+                        File file = File.createTempFile("tempFile", "."+path.replaceAll("^.*\\.", ""));
+
+                        try (InputStream inputStream = jar.getInputStream(entry)) {
+                            Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        }
+
+                        bytes = Files.readAllBytes(file.toPath());
+                        file.delete();
+                    }
+                }
+            } catch (IOException e) {
+                System.err.println("Error reading JAR file: " + e.getMessage());
+            }
+        } else {
+            URL url = enclosingClass.getProtectionDomain().getClassLoader().getResource(filePath);
+            if (url == null) return null;
+            File file = new File(url.toURI());
+            bytes = Files.readAllBytes(file.toPath());
+        }
+
+        return bytes;
     }
 
     private void addPublicFile(byte[] bytes, String publicPath) {
