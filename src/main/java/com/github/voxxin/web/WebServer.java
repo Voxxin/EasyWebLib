@@ -39,7 +39,7 @@ public class WebServer {
         webServerThread = new Thread(() -> {
             try {
                 if (this.webServer == null) this.webServer = new ServerSocket(port);
-                this.LOGGER.info("Started listening on port: " + port);
+                this.LOGGER.info("Started listening on port: {}", port);
                 while (!this.webServer.isClosed()) {
                     try (Socket clientSocket = this.webServer.accept();
                          BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8))) {
