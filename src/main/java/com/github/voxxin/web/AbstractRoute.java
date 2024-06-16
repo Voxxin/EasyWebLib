@@ -8,7 +8,7 @@ import java.net.Socket;
 
 public class AbstractRoute {
 
-    public final String route;
+    public String route;
 
     public AbstractRoute(String route) {
         route = route.replaceAll("^/+", "");
