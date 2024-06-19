@@ -77,8 +77,8 @@ public class HtmlParser {
                     String content = html.substring(tag.closingIndex, closingTag.openingIndex);
 
                     List<HtmlElement> subElements = parseContent(content);
-                    if (subElements.isEmpty()) elements.add(new HtmlElement(tag.tagName, parseAttributes(tag.attributes), content));
-                    else elements.add(new HtmlElement(tag.tagName, parseAttributes(tag.attributes), subElements));
+                    if (subElements.isEmpty()) elements.add(new HtmlElement(tag.tagName).addAttributes(parseAttributes(tag.attributes)).setStringSubElement(content));
+                    else elements.add(new HtmlElement(tag.tagName).addAttributes(parseAttributes(tag.attributes)).addSubElements(subElements));
 
                     hasClosingTag = true;
                     break;
@@ -86,7 +86,7 @@ public class HtmlParser {
             }
 
             if (!hasClosingTag) {
-                elements.add(new HtmlElement(tag.tagName, parseAttributes(tag.attributes), (String) null));
+                elements.add(new HtmlElement(tag.tagName).addAttributes(parseAttributes(tag.attributes)));
             }
         }
 
@@ -100,15 +100,22 @@ public class HtmlParser {
      * @param  attributesString  the string containing the attributes
      * @return                   a list of attributes
      */
-    private static List<String> parseAttributes(String attributesString) {
-        List<String> attributes = new ArrayList<>();
+    private static HashMap<String, List<String>> parseAttributes(String attributesString) {
+        HashMap<String, List<String>> attributes = new HashMap<>();
         if (attributesString != null) {
-            Pattern pattern = Pattern.compile("([^\"].*?([^\"]))\"([^\"]*)\"");
-            Matcher matcher = pattern.matcher(attributesString);
-            while (matcher.find()) {
-                String attributeName = matcher.group(1);
-                String attributeValue = matcher.group(3);
-                attributes.add((attributeName + "\"" + attributeValue + "\"").trim());
+            Pattern attributePattern = Pattern.compile("([^\"].*?([^\"]))\"([^\"]*)\"");
+            Matcher stringMatcher = attributePattern.matcher(attributesString);
+            while (stringMatcher.find()) {
+                String attributeName = stringMatcher.group(1);
+                String attributeValues = stringMatcher.group(3);
+
+                List<String> values = new ArrayList<>();
+                Pattern valuePattern = Pattern.compile("\\b\\S+");
+                Matcher valueMatcher = valuePattern.matcher(attributeValues);
+                while (valueMatcher.find()) {
+                    values.add(valueMatcher.group());
+                }
+                attributes.put(attributeName, values);
             }
         }
         return attributes;

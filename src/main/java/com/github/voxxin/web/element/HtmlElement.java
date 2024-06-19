@@ -3,285 +3,128 @@ package com.github.voxxin.web.element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class HtmlElement {
     private String tagName;
-    private List<String> attributes;
-    private List<HtmlElement> subElements;
-    private String subElement;
+    private Map<String, List<String>> attributes = new HashMap<>();
+    private List<HtmlElement> subElements = new ArrayList<>();
+    private String subElement = null;
 
     /**
      * Constructor for HtmlElement with sub-elements.
      *
      * @param tagName     The tag name of the HTML element.
-     * @param attributes  The list of attributes for the HTML element.
-     * @param subElements The sub-elements contained within this HTML element.
      */
-    public HtmlElement(@NotNull String tagName, @Nullable List<String> attributes, @Nullable HtmlElement... subElements) {
+    public HtmlElement(@NotNull String tagName) {
         this.tagName = tagName;
-        this.attributes = attributes;
-        this.subElement = null;
-        this.subElements = new ArrayList<>();
-        if (subElements != null) {
-            for (HtmlElement element : subElements) {
-                addSubElement(element);
-            }
-        }
     }
 
-    /**
-     * Constructor for HtmlElement with sub-elements.
-     *
-     * @param tagName     The tag name of the HTML element.
-     * @param attributes  The list of attributes for the HTML element.
-     * @param subElements The sub-elements contained within this HTML element.
-     */
-    public HtmlElement(@NotNull String tagName, @Nullable List<String> attributes, @Nullable List<HtmlElement> subElements) {
-        this.tagName = tagName;
-        this.attributes = attributes;
-        this.subElement = null;
-        this.subElements = new ArrayList<>();
-        if (subElements != null) {
-            for (HtmlElement element : subElements) {
-                addSubElement(element);
-            }
-        }
-    }
-
-    /**
-     * Constructor for HtmlElement with text content.
-     *
-     * @param tagName    The tag name of the HTML element.
-     * @param attributes The list of attributes for the HTML element.
-     * @param subElement The text content of the HTML element.
-     */
-    public HtmlElement(@NotNull String tagName, @Nullable List<String> attributes, @Nullable String subElement) {
-        this.tagName = tagName;
-        this.attributes = attributes;
-        this.subElement = subElement;
-        this.subElements = new ArrayList<>();
-    }
-
-    /**
-     * Get the list of sub-elements of this HtmlElement.
-     *
-     * @return The list of sub-elements.
-     */
-    public List<HtmlElement> getSubElements() {
-        return subElements;
-    }
-
-    /**
-     * Get the text content of this HtmlElement.
-     *
-     * @return The text content.
-     */
-    public String getSubElement() {
-        return subElement;
-    }
-
-    /**
-     * Add a sub-element to this HtmlElement.
-     *
-     * @param element The sub-element to be added.
-     */
-    public void addSubElement(HtmlElement element) {
-        if (element != null) {
-            subElements.add(element);
-            this.subElement = null;
-        }
-    }
-
-    /**
-     * Add multiple sub-elements to this HtmlElement.
-     *
-     * @param subElements The list of sub-elements to be added.
-     */
-    public void addSubElements(List<HtmlElement> subElements) {
-        this.subElements.addAll(subElements);
-    }
-
-
-    /**
-     * Set the list of sub-elements for this HtmlElement.
-     *
-     * @param subElements The list of sub-elements.
-     */
-    public void setSubElements(List<HtmlElement> subElements) {
-        this.subElements = subElements;
-        this.subElement = null;
-    }
-
-    /**
-     * Set the text content for this HtmlElement.
-     *
-     * @param subElement The text content.
-     */
-    public void setSubElement(String subElement) {
-        this.subElements = new ArrayList<>();
-        this.subElement = subElement;
-    }
-
-    /**
-     * Get the tag name of this HtmlElement.
-     *
-     * @return The tag name.
-     */
     public String getTagName() {
-        return this.tagName;
+        return tagName;
     }
 
-    public void setTagName(String tagName) {
-        this.tagName = tagName;
+    public HtmlElement addAttributes(@NotNull String attribute, @NotNull List<String> values) {
+        if (this.attributes.containsKey(attribute)) this.attributes.get(attribute).addAll(values);
+        else this.attributes.put(attribute, values);
+        return this;
+    }
+
+    public HtmlElement addAttributes(@NotNull HashMap<String, List<String>> values) {
+        for(String key : values.keySet()) {
+            if (this.attributes.containsKey(key)) this.attributes.get(key).addAll(values.get(key));
+            else this.attributes.put(key, values.get(key));
+        }
+        return this;
+    }
+
+    public HtmlElement addAttribute(@NotNull String attribute, @NotNull String value) {
+        if (this.attributes.containsKey(attribute)) this.attributes.get(attribute).add(value);
+        else this.attributes.put(attribute, List.of(value));
+        return this;
+    }
+
+    public HtmlElement setAttributes(@NotNull HashMap<String, List<String>> values) {
+        this.attributes = values;
+        return this;
+    }
+
+    public HtmlElement setAttributes(@NotNull String attribute, @NotNull List<String> values) {
+        this.attributes = new HashMap<>();
+        this.attributes.put(attribute, values);
+        return this;
+    }
+
+    public HtmlElement setAttribute(@NotNull String attribute, @NotNull String value) {
+        this.attributes = new HashMap<>();
+        this.attributes.put(attribute, Collections.singletonList(value));
+        return this;
     }
 
 
-    /**
-     * Retrieve the list of attributes associated with this HtmlElement.
-     *
-     * @return The list of attributes.
-     */
-    public List<String> getAttributes() {
-        return attributes;
+    public List<String> getAttributes(@NotNull String attribute) {
+        return this.attributes.get(attribute);
     }
 
-    /**
-     * Add an attribute to this HtmlElement.
-     *
-     * @param attributeType  The type of the attribute.
-     * @param attributeValue The value of the attribute.
-     */
-    public void addAttribute(String attributeType, String attributeValue) {
-        this.attributes.add(attributeType + "=\"" + attributeValue + "\"");
+    public String getAttributesAsString(@NotNull String attribute) {
+        String stringed = String.join(" ", this.attributes.get(attribute));
+        return stringed.isEmpty() ? "" : stringed;
     }
 
-    /**
-     * Add an attribute with multiple values to this HtmlElement.
-     *
-     * @param attributeType   The type of the attribute.
-     * @param attributeValues The list of values for the attribute.
-     */
-    public void addAttribute(String attributeType, List<String> attributeValues) {
-        String attributeValue = String.join(" ", attributeValues);
-        this.attributes.add(attributeType + "=\"" + attributeValue + "\"");
-    }
-
-    /**
-     * Add multiple attributes to this HtmlElement.
-     *
-     * @param attributes The list of attributes to add.
-     */
-    public void addAttributes(List<String> attributes) {
-        this.attributes.addAll(attributes);
-    }
-
-    /**
-     * Update the attributes of this HtmlElement with the provided list.
-     *
-     * @param attributes The new list of attributes to set.
-     */
-    public void setAttributes(List<String> attributes) {
-        this.attributes = attributes;
-    }
-
-    /**
-     * Remove a specific attribute from this HtmlElement.
-     *
-     * @param attribute The attribute to remove.
-     */
-    public void removeAttribute(String attribute) {
+    public void removeAttribute(@NotNull String attribute) {
         this.attributes.remove(attribute);
     }
 
-    /**
-     * Clear all attributes from this HtmlElement.
-     */
-    public void clearAttributes() {
-        this.attributes.clear();
+    public HtmlElement addSubElement(@NotNull HtmlElement element) {
+        this.subElements.add(element);
+        this.subElement = null;
+        return this;
     }
 
-    /**
-     * Check if the HtmlElement has an attribute with the specified type and value.
-     *
-     * @param attributeType  The type of the attribute.
-     * @param attributeValue The value of the attribute.
-     * @return True if the HtmlElement has the specified attribute, false otherwise.
-     */
-    public boolean hasAttribute(String attributeType, String attributeValue) {
-        if (attributes != null) {
-            for (String attr : attributes) {
-                String[] parts = attr.split("=");
-                if (parts.length == 2) {
-                    String type = parts[0].trim();
-                    String value = parts[1].replaceAll("\"", "").trim();
-                    if (type.equals(attributeType) && value.equals(attributeValue)) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
+    public HtmlElement addSubElements(@NotNull List<HtmlElement> elements) {
+        this.subElements.addAll(elements);
+        this.subElement = null;
+        return this;
     }
 
-    /**
-     * Get the value of the attribute with the specified type.
-     *
-     * @param attributeType The type of the attribute.
-     * @return The value of the attribute, or null if not found.
-     */
-    public String[] getAttributeValue(String attributeType) {
-        if (attributes != null) {
-            for (int i = 0; i < attributes.size(); i++) {
-                String attr = attributes.get(i);
-                String[] parts = attr.split("=");
-                if (parts.length == 2) {
-                    String type = parts[0].trim();
-                    String value = parts[1].replaceAll("\"", "").trim();
-                    if (type.equals(attributeType)) {
-                        return new String[]{value, Integer.toString(i)};
-                    }
-                }
-            }
-        }
-        return null;
+    public HtmlElement addSubElements(@NotNull HtmlElement... elements) {
+        this.subElements.addAll(List.of(elements));
+        this.subElement = null;
+        return this;
     }
 
-    /**
-     * Modify the value of the attribute at the specified index.
-     *
-     * @param index           The index of the attribute to modify.
-     * @param newAttributeValue The new value for the attribute.
-     */
-    public void modifyAttributeAtIndex(int index, String newAttributeValue) {
-        if (attributes != null && index >= 0 && index < attributes.size()) {
-            attributes.set(index, newAttributeValue);
-        }
+    public HtmlElement addSubElementsFromString(@NotNull String elements) {
+        List<HtmlElement> builtElements = HtmlParser.parseHtmlString(elements);
+        this.subElements.addAll(builtElements);
+        this.subElement = null;
+        return this;
     }
 
-    /**
-     * Modify the value of the attribute with the specified type.
-     *
-     * @param attributeType    The type of the attribute to modify.
-     * @param newAttributeValue The new value for the attribute.
-     */
-    public void modifyAttribute(String attributeType, String newAttributeValue) {
-        if (attributes != null) {
-            for (int i = 0; i < attributes.size(); i++) {
-                String attr = attributes.get(i);
-                String[] parts = attr.split("=");
-                if (parts.length == 2) {
-                    String type = parts[0].trim();
-                    String value = parts[1].replaceAll("\"", "").trim();
-                    if (type.equals(attributeType)) {
-                        attributes.set(i, type + "=\"" + newAttributeValue + "\"");
-                        return;
-                    }
-                }
-            }
-        }
+    public List<HtmlElement> getSubElements() {
+        return Collections.unmodifiableList(this.subElements);
     }
+
+    public String getStringSubElement() {
+        return this.subElement;
+    }
+
+    public HtmlElement setSubElements(@Nullable List<HtmlElement> elements) {
+        this.subElements = elements != null ? elements : new ArrayList<>();
+        this.subElement = null;
+        return this;
+    }
+
+    public HtmlElement setStringSubElement(String subElement) {
+        this.subElement = subElement;
+        this.subElements = new ArrayList<>();
+        return this;
+    }
+
+    public HtmlElement removeSubElement(@NotNull HtmlElement element) {
+        this.subElements.remove(element);
+        return this;
+    }
+
 
     /**
      * Generate the HTML string representation of this HtmlElement.
@@ -291,24 +134,24 @@ public class HtmlElement {
     protected String htmlString() {
         StringBuilder builder = new StringBuilder();
 
-        builder.append("<").append(tagName);
-        if (attributes != null) {
-            for (String attribute : attributes) {
-                builder.append(" ").append(attribute.trim());
+        builder.append("<").append(this.tagName);
+        if (this.attributes != null) {
+            for (String attributeKey : this.attributes.keySet()) {
+                builder.append(" ").append(attributeKey).append("=\"").append(this.getAttributesAsString(attributeKey)).append("\" ");
             }
         }
         builder.append(">");
 
-        if (!subElements.isEmpty()) {
-            for (HtmlElement element : subElements) {
+        if (!this.subElements.isEmpty()) {
+            for (HtmlElement element : this.subElements) {
                 builder.append("\n  ").append(element.htmlString());
             }
             builder.append("\n");
-        } else if (subElement != null) {
-            builder.append(" ").append(subElement);
+        } else if (this.subElement != null) {
+            builder.append(" ").append(this.subElement);
         }
 
-        builder.append("</").append(tagName).append(">");
+        builder.append("</").append(this.tagName).append(">");
 
         return builder.toString();
     }
