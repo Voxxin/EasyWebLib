@@ -63,12 +63,11 @@ public class HtmlElement {
 
 
     public List<String> getAttributes(@NotNull String attribute) {
-        return this.attributes.get(attribute);
+        return this.attributes.getOrDefault(attribute, Collections.emptyList());
     }
 
     public String getAttributesAsString(@NotNull String attribute) {
-        String stringed = String.join(" ", this.attributes.get(attribute));
-        return stringed.isEmpty() ? "" : stringed;
+        return this.attributes.containsKey(attribute) ? String.join(" ", this.attributes.get(attribute)) : "";
     }
 
     public void removeAttribute(@NotNull String attribute) {
