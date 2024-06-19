@@ -3,6 +3,7 @@ package com.github.voxxin.web.element;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class HtmlParser {
     /**
@@ -102,22 +103,23 @@ public class HtmlParser {
      */
     private static HashMap<String, List<String>> parseAttributes(String attributesString) {
         HashMap<String, List<String>> attributes = new HashMap<>();
-        if (attributesString != null) {
-            Pattern attributePattern = Pattern.compile("([^\"].*?([^\"]))\"([^\"]*)\"");
-            Matcher stringMatcher = attributePattern.matcher(attributesString);
-            while (stringMatcher.find()) {
-                String attributeName = stringMatcher.group(1);
-                String attributeValues = stringMatcher.group(3);
 
-                List<String> values = new ArrayList<>();
-                Pattern valuePattern = Pattern.compile("\\b\\S+");
-                Matcher valueMatcher = valuePattern.matcher(attributeValues);
-                while (valueMatcher.find()) {
-                    values.add(valueMatcher.group());
-                }
-                attributes.put(attributeName, values);
-            }
+        if (attributesString == null || attributesString.isEmpty()) return attributes;
+
+        Pattern attributePattern = Pattern.compile("(\\w+)\\s*=\\s*\"([^\"]*)\"");
+        Matcher matcher = attributePattern.matcher(attributesString);
+
+        while (matcher.find()) {
+            String attributeName = matcher.group(1);
+            String attributeValues = matcher.group(2);
+
+            List<String> values = Arrays.stream(attributeValues.split("\\s+"))
+                    .filter(val -> !val.isEmpty())
+                    .collect(Collectors.toList());
+
+            attributes.put(attributeName, values);
         }
+
         return attributes;
     }
 
